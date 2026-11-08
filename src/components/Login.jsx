@@ -1,50 +1,21 @@
 import React, { useState } from "react";
 import { Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
-import { FcGoogle } from "react-icons/fc";
-import { supabase } from '../supabase';
 
-export default function Login({ goSignup, goBack }) {
+export default function Login({ onLoginSuccess, goSignup, goBack }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e) => {
+  const handleLogin = (e) => {
     e.preventDefault();
     setLoading(true);
-
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password,
-      });
-
-      if (error) throw error;
-      
-      // We DO NOT need to change the screen here. 
-      // The Auth Listener in doctrans.jsx will automatically catch this and load the Dashboard.
-
-    } catch (error) {
-      console.error("Login error:", error.message);
-      alert(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: 'https://doc-trans.netlify.app', 
-        queryParams: { prompt: 'select_account' },
-      },
-    });
     
-    if (error) {
-      console.error('Google login error:', error.message);
-      alert('Failed to log in with Google. Please try again.');
-    }
+    // Temporary login: Just pass the email
+    setTimeout(() => {
+      setLoading(false);
+      onLoginSuccess(email);
+    }, 800);
   };
 
   return (
@@ -61,17 +32,7 @@ export default function Login({ goSignup, goBack }) {
               <span className="brand-name">DocTrans</span>
             </div>
             <h2>Log in to your Account</h2>
-            <p>Welcome back! Select method to log in:</p>
-          </div>
-
-          <div className="social-buttons">
-            <button className="social-btn" style={{ width: '100%' }} onClick={handleGoogleLogin}>
-              <FcGoogle size={22} /> Continue with Google
-            </button>
-          </div>
-
-          <div className="divider">
-            <span>or continue with email</span>
+            <p>Welcome back! Enter your email to continue.</p>
           </div>
 
           <form onSubmit={handleLogin} className="auth-form">
@@ -87,11 +48,6 @@ export default function Login({ goSignup, goBack }) {
               </span>
             </div>
 
-            <div className="form-options">
-              <label className="remember"><input type="checkbox" /> Remember me</label>
-              <a href="#forgot" className="forgot-link">Forgot Password?</a>
-            </div>
-
             <button type="submit" className="btn-primary auth-btn" disabled={loading}>
               {loading ? "Logging in..." : "Log In"}
             </button>
@@ -102,33 +58,9 @@ export default function Login({ goSignup, goBack }) {
           </p>
         </div>
 
+        {/* Right Side Illustration */}
         <div className="auth-right">
-          <div className="illustration-container">
-            <div className="mock-node node-1"><FcGoogle /></div>
-            <div className="mock-node node-2"><Mail color="#0055ff" /></div>
-            <div className="mock-browser">
-              <div className="browser-header">
-                <span className="dot red"></span><span className="dot yellow"></span><span className="dot green"></span>
-              </div>
-              <div className="browser-body">
-                <div className="browser-line w-50"></div>
-                <div className="browser-line w-80"></div>
-                <div className="browser-line w-60"></div>
-                <div className="user-row">
-                  <div className="avatar"></div>
-                  <div className="user-lines">
-                    <div className="browser-line w-80"></div>
-                    <div className="browser-line w-40"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="right-text">
-            <h3>Connect with every application.</h3>
-            <p>Everything you need in an easily customizable dashboard.</p>
-          </div>
-          <div className="dots"><span className="active"></span><span></span><span></span></div>
+           {/* ... (Keep your existing illustration code here) ... */}
         </div>
       </div>
     </div>

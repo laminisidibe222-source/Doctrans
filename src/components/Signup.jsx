@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Mail, Lock, User, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
-import { supabase } from '../supabase';
+
 
 export default function Signup({ onSignupSuccess, goLogin, goBack }) {
   const [name, setName] = useState("");
@@ -21,7 +21,7 @@ export default function Signup({ onSignupSuccess, goLogin, goBack }) {
       });
       if (error) throw error;
       if (data.session) {
-        onSignupSuccess(data.user.email);
+        onSignupSuccess(email);
       } else {
         alert("Account created! Check your email to confirm.");
         goLogin();
