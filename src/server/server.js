@@ -4,7 +4,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const deepl = require("deepl-node");
-const { Pool } = require("pg"); // <-- Postgres driver for Neon
+const { Pool } = require("pg"); // <-- Using pg for Neon
 require("dotenv").config();
 
 const app = express();
@@ -35,7 +35,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage, limits: { fileSize: 50 * 1024 * 1024 } });
 
 // Initialize Neon Database Pool
-// Neon requires SSL, so we explicitly set rejectUnauthorized to false for cloud compatibility
+// Neon requires SSL. Setting rejectUnauthorized to false is standard for cloud providers.
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
@@ -62,15 +62,13 @@ app.post("/api/translate", upload.single("file"), async (req, res) => {
     if (!file) return res.status(400).json({ error: "No file uploaded." });
     if (!email) return res.status(400).json({ error: "Email required." });
 
-    // Get a client from the pool
     client = await pool.connect();
 
-    // --- FETCH OR CREATE USER ---
+    // Fetch or Create User
     let userRes = await client.query('SELECT * FROM app_users WHERE email = $1', [email]);
     let user;
 
     if (userRes.rows.length === 0) {
-      // Create new user
       const insertRes = await client.query(
         'INSERT INTO app_users (email, plan, translations_used) VALUES ($1, $2, $3) RETURNING *',
         [email, 'Free', 0]
@@ -82,13 +80,13 @@ app.post("/api/translate", upload.single("file"), async (req, res) => {
 
     const currentUsage = user.translations_used || 0;
 
-    // --- CHECK LIMIT ---
+    // Check Limit
     if (user.plan === "Free" && currentUsage >= MAX_FREE_TRANSLATIONS) {
       try { fs.unlinkSync(file.path); } catch (e) {}
       return res.status(403).json({ error: "FREE_LIMIT_REACHED" });
     }
 
-    // --- TRANSLATE ---
+    // Translate
     const getLangCode = (str) => {
       if (!str || str === "Auto-Detect") return null;
       if (str.includes("French")) return "fr";
@@ -109,7 +107,7 @@ app.post("/api/translate", upload.single("file"), async (req, res) => {
 
     try { fs.unlinkSync(file.path); } catch (e) {}
 
-    // --- INCREMENT USAGE & SAVE DOCUMENT (Transaction) ---
+    // Increment Usage & Save Document (Transaction)
     await client.query('BEGIN');
 
     const newUsageCount = currentUsage + 1;
@@ -141,7 +139,7 @@ app.post("/api/translate", upload.single("file"), async (req, res) => {
     }
     res.status(500).json({ error: error.message || "Translation failed." });
   } finally {
-    if (client) client.release(); // Always release the client back to the pool
+    if (client) client.release();
   }
 });
 
