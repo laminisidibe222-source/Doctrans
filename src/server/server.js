@@ -4,7 +4,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const deepl = require("deepl-node");
-const { createClient } = require("@supabase/supabase-js");
+const { Pool } = require("pg"); // <-- Postgres driver for Neon
 require("dotenv").config();
 
 const app = express();
@@ -34,8 +34,16 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage, limits: { fileSize: 50 * 1024 * 1024 } });
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+// Initialize Neon Database Pool
+// Neon requires SSL, so we explicitly set rejectUnauthorized to false for cloud compatibility
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
 
+// Initialize DeepL
 const translator = new deepl.Translator(process.env.DEEPL_API_KEY, {
   minTimeout: 60000, 
 });
@@ -46,6 +54,7 @@ const MAX_FREE_TRANSLATIONS = 2;
 // 2. TRANSLATION ROUTE
 // ==========================================
 app.post("/api/translate", upload.single("file"), async (req, res) => {
+  let client;
   try {
     const file = req.file;
     const { targetLang, email, sourceLang } = req.body;
@@ -53,36 +62,24 @@ app.post("/api/translate", upload.single("file"), async (req, res) => {
     if (!file) return res.status(400).json({ error: "No file uploaded." });
     if (!email) return res.status(400).json({ error: "Email required." });
 
-    // --- SAFE USER FETCHING ---
-    let { data: user, error: fetchError } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("email", email)
-      .maybeSingle(); // maybeSingle prevents PGRST116 error if user doesn't exist
+    // Get a client from the pool
+    client = await pool.connect();
 
-    if (fetchError) {
-      console.error("Supabase Fetch Error:", fetchError);
-      throw new Error("Database error fetching user profile.");
-    }
+    // --- FETCH OR CREATE USER ---
+    let userRes = await client.query('SELECT * FROM app_users WHERE email = $1', [email]);
+    let user;
 
-    if (!user) {
+    if (userRes.rows.length === 0) {
       // Create new user
-      const { data: newUser, error: insertError } = await supabase
-        .from("profiles")
-        .insert([{ email, plan: "Free", translations_used: 0 }])
-        .select()
-        .maybeSingle();
-
-      if (insertError) {
-        console.error("Supabase Insert Error:", insertError);
-        throw new Error(`Failed to create user: ${insertError.message}`);
-      }
-      user = newUser;
+      const insertRes = await client.query(
+        'INSERT INTO app_users (email, plan, translations_used) VALUES ($1, $2, $3) RETURNING *',
+        [email, 'Free', 0]
+      );
+      user = insertRes.rows[0];
+    } else {
+      user = userRes.rows[0];
     }
 
-    if (!user) throw new Error("Failed to find or create user in database.");
-
-    // Ensure translations_used is a number
     const currentUsage = user.translations_used || 0;
 
     // --- CHECK LIMIT ---
@@ -112,48 +109,39 @@ app.post("/api/translate", upload.single("file"), async (req, res) => {
 
     try { fs.unlinkSync(file.path); } catch (e) {}
 
-    // --- INCREMENT USAGE ---
+    // --- INCREMENT USAGE & SAVE DOCUMENT (Transaction) ---
+    await client.query('BEGIN');
+
     const newUsageCount = currentUsage + 1;
-    await supabase
-      .from("profiles")
-      .update({ translations_used: newUsageCount })
-      .eq("email", email);
+    await client.query(
+      'UPDATE app_users SET translations_used = $1 WHERE email = $2',
+      [newUsageCount, email]
+    );
 
-    // --- SAVE DOCUMENT ---
     const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${translatedFilename}`;
-    const newDocument = {
-      email: email, 
-      name: file.originalname, 
-      lang: targetLang,
-      date: new Date().toLocaleDateString(), 
-      status: "Done", 
-      url: fileUrl
-    };
     
-    const { data: savedDoc, error: docError } = await supabase
-      .from("documents") 
-      .insert([newDocument])
-      .select()
-      .maybeSingle();
+    const docRes = await client.query(
+      'INSERT INTO app_documents (email, name, lang, date, status, url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [email, file.originalname, targetLang, new Date().toLocaleDateString(), 'Done', fileUrl]
+    );
 
-    if (docError) {
-      console.error("Supabase Document Error:", docError);
-      throw new Error(`Failed to save document record: ${docError.message}`);
-    }
+    await client.query('COMMIT');
 
     res.status(200).json({ 
       success: true, 
-      document: savedDoc, 
+      document: docRes.rows[0], 
       translationsUsed: newUsageCount 
     });
 
   } catch (error) {
+    if (client) await client.query('ROLLBACK');
     console.error("Translation Error:", error);
     if (req.file && fs.existsSync(req.file.path)) {
       try { fs.unlinkSync(req.file.path); } catch (e) {}
     }
-    // Send the exact error message to the frontend
     res.status(500).json({ error: error.message || "Translation failed." });
+  } finally {
+    if (client) client.release(); // Always release the client back to the pool
   }
 });
 
@@ -164,25 +152,27 @@ app.get("/api/account", async (req, res) => {
   const { email } = req.query;
   if (!email) return res.status(400).json({ error: "Email required" });
 
-  const { data: user } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("email", email)
-    .maybeSingle();
-  
-  if (!user) {
-    return res.status(200).json({ 
-      subscription: { plan: "Free", status: "inactive", translationsUsed: 0 } 
-    });
-  }
+  try {
+    const { rows } = await pool.query('SELECT plan, translations_used FROM app_users WHERE email = $1', [email]);
+    
+    if (rows.length === 0) {
+      return res.status(200).json({ 
+        subscription: { plan: "Free", status: "inactive", translationsUsed: 0 } 
+      });
+    }
 
-  res.status(200).json({ 
-    subscription: { 
-      plan: user.plan, 
-      status: user.plan !== "Free" ? "active" : "inactive",
-      translationsUsed: user.translations_used || 0
-    } 
-  });
+    const user = rows[0];
+    res.status(200).json({ 
+      subscription: { 
+        plan: user.plan, 
+        status: user.plan !== "Free" ? "active" : "inactive",
+        translationsUsed: user.translations_used || 0
+      } 
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Database error" });
+  }
 });
 
 // ==========================================
@@ -192,13 +182,16 @@ app.get("/api/documents", async (req, res) => {
   const { email } = req.query;
   if (!email) return res.status(400).json({ error: "Email required" });
 
-  const { data: docs } = await supabase
-    .from("documents")
-    .select("*")
-    .eq("email", email)
-    .order("created_at", { ascending: false });
-
-  res.status(200).json(docs || []);
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM app_documents WHERE email = $1 ORDER BY id DESC', 
+      [email]
+    );
+    res.status(200).json(rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Database error" });
+  }
 });
 
 // ==========================================
@@ -206,5 +199,5 @@ app.get("/api/documents", async (req, res) => {
 // ==========================================
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
-  console.log(`🚀 Backend running on port 10000`);
+  console.log(`🚀 Backend running on port ${PORT}`);
 });
