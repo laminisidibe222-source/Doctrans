@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Plus, FileText, CreditCard, Settings, LogOut,
   UploadCloud, Globe, Search, Bell, ArrowUpRight, Award,
   X, Menu, ArrowRightLeft, File, Check, User, Shield,
-  Sliders, AlertTriangle, Trash2, Download
+  Sliders, AlertTriangle, Trash2, Download, Eye
 } from "lucide-react";
 import "../doctrans.css";
 
@@ -24,6 +24,7 @@ export default function AppView({
   const [translatedDoc, setTranslatedDoc] = useState(null); 
   const [documents, setDocuments] = useState([]); 
   const [translationsUsed, setTranslationsUsed] = useState(0);
+  const [selectedDoc, setSelectedDoc] = useState(null); // State for the Modal
   const MAX_FREE_TRANSLATIONS = 2;
 
   // Settings State
@@ -36,24 +37,26 @@ export default function AppView({
 
   // Fetch Account Usage & Documents
   useEffect(() => {
-    if (email) {
-      const backendUrl = "https://doctrans-backend.onrender.com";
-      
-      fetch(`${backendUrl}/api/account?email=${encodeURIComponent(email)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.subscription) {
-            setTranslationsUsed(data.subscription.translationsUsed || 0);
-          }
-        })
-        .catch(err => console.error(err));
+    if (!email) return;
 
-      if (activeTab === "documents") {
-        fetch(`${backendUrl}/api/documents?email=${encodeURIComponent(email)}`)
-          .then(res => res.json())
-          .then(data => setDocuments(data))
-          .catch(err => console.error(err));
-      }
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || "https://doctrans-backend.onrender.com";
+    
+    // Fetch Account Status (Usage)
+    fetch(`${backendUrl}/api/account?email=${encodeURIComponent(email)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.subscription) {
+          setTranslationsUsed(data.subscription.translationsUsed || 0);
+        }
+      })
+      .catch(err => console.error("Error fetching account:", err));
+
+    // Fetch Documents
+    if (activeTab === "documents") {
+      fetch(`${backendUrl}/api/documents?email=${encodeURIComponent(email)}`)
+        .then(res => res.json())
+        .then(data => setDocuments(data))
+        .catch(err => console.error("Error fetching documents:", err));
     }
   }, [activeTab, email]);
 
@@ -90,7 +93,7 @@ export default function AppView({
     formData.append("preserveLayout", preserveLayout);
 
     try {
-      const backendUrl = "https://doctrans-backend.onrender.com";
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || "https://doctrans-backend.onrender.com";
 
       const response = await fetch(`${backendUrl}/api/translate`, {
         method: "POST",
@@ -136,6 +139,7 @@ export default function AppView({
 
   return (
     <div className="eduplex-layout">
+      
       {/* DARK BACKDROP FOR MOBILE */}
       {isSidebarOpen && (
         <div className="sidebar-backdrop" onClick={() => setIsSidebarOpen(false)}></div>
@@ -363,7 +367,9 @@ export default function AppView({
             </div>
           )}
 
-          {/* DOCUMENTS VIEW */}
+          {/* =========================================
+              DOCUMENTS VIEW (UPDATED WITH MODAL)
+          ========================================= */}
           {activeTab === "documents" && (
             <div className="documents-table-card">
               <table className="doc-table">
@@ -371,7 +377,7 @@ export default function AppView({
                   <tr>
                     <th>Name</th>
                     <th>Language</th>
-                    <th>Date</th>
+                    <th className="hide-mobile">Date</th>
                     <th>Status</th>
                     <th>Action</th>
                   </tr>
@@ -382,14 +388,14 @@ export default function AppView({
                   ) : (
                     documents.map((doc) => (
                       <tr key={doc.id}>
-                        <td><FileText size={16} /> {doc.name}</td>
+                        <td className="doc-name-cell"><FileText size={16} /> {doc.name}</td>
                         <td>{doc.lang}</td>
-                        <td>{doc.date}</td>
+                        <td className="hide-mobile">{doc.date}</td>
                         <td><span className="status-badge success">{doc.status}</span></td>
                         <td>
-                          <a href={doc.url} download className="btn-download-sm" target="_blank" rel="noreferrer">
-                            <Download size={16} /> Download
-                          </a>
+                          <button className="btn-view-doc" onClick={() => setSelectedDoc(doc)}>
+                            <Eye size={16} /> <span className="hide-mobile">View</span>
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -409,8 +415,8 @@ export default function AppView({
                     <CreditCard className="plan-icon-large" />
                   </div>
                   <div className="usage-section">
-                    <div className="usage-text"><span>Pages used this month</span><strong>{plan ? "Unlimited" : "0 / 5"}</strong></div>
-                    <div className="usage-bar-bg"><div className="usage-bar-fill" style={{ width: plan ? "10%" : "0%" }}></div></div>
+                    <div className="usage-text"><span>Translations used</span><strong>{plan ? "Unlimited" : `${translationsUsed} / ${MAX_FREE_TRANSLATIONS}`}</strong></div>
+                    <div className="usage-bar-bg"><div className="usage-bar-fill" style={{ width: plan ? "10%" : `${(translationsUsed / MAX_FREE_TRANSLATIONS) * 100}%` }}></div></div>
                   </div>
                   <div className="billing-info-row">
                     <div className="info-item"><span className="info-label">Next Billing Date</span><span className="info-value">{plan ? "Nov 22, 2026" : "N/A"}</span></div>
@@ -433,7 +439,7 @@ export default function AppView({
                   <div className="upgrade-card">
                     <div className="card-top"><h4>Ponctuel</h4><p className="upgrade-desc">For occasional users.</p><div className="upgrade-price">0€<span>/mo</span></div></div>
                     <ul className="upgrade-features">
-                      <li><Check size={18} className="check-icon" /> 5 pages per month</li>
+                      <li><Check size={18} className="check-icon" /> 2 free translations</li>
                       <li><Check size={18} className="check-icon" /> Standard translation</li>
                     </ul>
                     <button className="btn-outline w-full" disabled>Current Plan</button>
@@ -462,9 +468,7 @@ export default function AppView({
             </div>
           )}
 
-          {/* =========================================
-              SETTINGS VIEW (FULL RESTORED)
-          ========================================= */}
+          {/* SETTINGS VIEW */}
           {activeTab === "settings" && (
             <div className="settings-container">
               <div className="settings-card">
@@ -556,6 +560,43 @@ export default function AppView({
 
         </div>
       </main>
+
+      {/* =========================================
+          DOCUMENT DETAILS MODAL
+      ========================================= */}
+      {selectedDoc && (
+        <div className="doc-modal-overlay" onClick={() => setSelectedDoc(null)}>
+          <div className="doc-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setSelectedDoc(null)}>
+              <X size={20} />
+            </button>
+            
+            <div className="modal-header">
+              <div className="file-icon-box"><FileText size={32} /></div>
+              <h3>{selectedDoc.name}</h3>
+              <span className="status-badge success">{selectedDoc.status}</span>
+            </div>
+
+            <div className="modal-body">
+              <div className="detail-row">
+                <span className="detail-label">Target Language</span>
+                <span className="detail-value">{selectedDoc.lang}</span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Date Translated</span>
+                <span className="detail-value">{selectedDoc.date}</span>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <a href={selectedDoc.url} download className="btn-download w-full" target="_blank" rel="noreferrer">
+                <Download size={18} /> Download File
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
