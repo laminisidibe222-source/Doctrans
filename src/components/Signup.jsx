@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Mail, Lock, User, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 
-
 export default function Signup({ onSignupSuccess, goLogin, goBack }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -10,38 +9,19 @@ export default function Signup({ onSignupSuccess, goLogin, goBack }) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSignup = async (e) => {
+  const handleSignup = (e) => {
     e.preventDefault();
     setLoading(true);
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: email,
-        password: password,
-        options: { data: { full_name: name } },
-      });
-      if (error) throw error;
-      if (data.session) {
-        onSignupSuccess(email);
-      } else {
-        alert("Account created! Check your email to confirm.");
-        goLogin();
-      }
-    } catch (error) {
-      alert(error.message);
-    } finally {
+    
+    // Temporary mock signup (Bypasses Supabase)
+    setTimeout(() => {
       setLoading(false);
-    }
+      onSignupSuccess(email); // Logs the user in with their email
+    }, 800);
   };
 
-  const handleGoogleSignup = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: 'https://doc-trans.netlify.app', 
-        queryParams: { prompt: 'select_account' },
-      },
-    });
-    if (error) alert('Failed to sign up with Google.');
+  const handleGoogleSignup = () => {
+    alert("Google Auth will be enabled soon. Please use email for now.");
   };
 
   return (
@@ -98,6 +78,7 @@ export default function Signup({ onSignupSuccess, goLogin, goBack }) {
           </p>
         </div>
 
+        {/* Right Side Illustration */}
         <div className="auth-right">
           <div className="illustration-container">
             <div className="mock-node node-1"><FcGoogle /></div>

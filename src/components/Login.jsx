@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { FcGoogle } from "react-icons/fc";
 
 export default function Login({ onLoginSuccess, goSignup, goBack }) {
   const [email, setEmail] = useState("");
@@ -11,11 +12,15 @@ export default function Login({ onLoginSuccess, goSignup, goBack }) {
     e.preventDefault();
     setLoading(true);
     
-    // Temporary login: Just pass the email
+    // Temporary mock login
     setTimeout(() => {
       setLoading(false);
-      onLoginSuccess(email);
+      onLoginSuccess(email); 
     }, 800);
+  };
+
+  const handleGoogleLogin = () => {
+    alert("Google Auth will be enabled soon. Please use email for now.");
   };
 
   return (
@@ -32,7 +37,17 @@ export default function Login({ onLoginSuccess, goSignup, goBack }) {
               <span className="brand-name">DocTrans</span>
             </div>
             <h2>Log in to your Account</h2>
-            <p>Welcome back! Enter your email to continue.</p>
+            <p>Welcome back! Select method to log in:</p>
+          </div>
+
+          <div className="social-buttons">
+            <button className="social-btn" style={{ width: '100%' }} onClick={handleGoogleLogin}>
+              <FcGoogle size={22} /> Continue with Google
+            </button>
+          </div>
+
+          <div className="divider">
+            <span>or continue with email</span>
           </div>
 
           <form onSubmit={handleLogin} className="auth-form">
@@ -48,6 +63,11 @@ export default function Login({ onLoginSuccess, goSignup, goBack }) {
               </span>
             </div>
 
+            <div className="form-options">
+              <label className="remember"><input type="checkbox" /> Remember me</label>
+              <a href="#forgot" className="forgot-link">Forgot Password?</a>
+            </div>
+
             <button type="submit" className="btn-primary auth-btn" disabled={loading}>
               {loading ? "Logging in..." : "Log In"}
             </button>
@@ -60,7 +80,32 @@ export default function Login({ onLoginSuccess, goSignup, goBack }) {
 
         {/* Right Side Illustration */}
         <div className="auth-right">
-           {/* ... (Keep your existing illustration code here) ... */}
+          <div className="illustration-container">
+            <div className="mock-node node-1"><FcGoogle /></div>
+            <div className="mock-node node-2"><Mail color="#0055ff" /></div>
+            <div className="mock-browser">
+              <div className="browser-header">
+                <span className="dot red"></span><span className="dot yellow"></span><span className="dot green"></span>
+              </div>
+              <div className="browser-body">
+                <div className="browser-line w-50"></div>
+                <div className="browser-line w-80"></div>
+                <div className="browser-line w-60"></div>
+                <div className="user-row">
+                  <div className="avatar"></div>
+                  <div className="user-lines">
+                    <div className="browser-line w-80"></div>
+                    <div className="browser-line w-40"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="right-text">
+            <h3>Connect with every application.</h3>
+            <p>Everything you need in an easily customizable dashboard.</p>
+          </div>
+          <div className="dots"><span className="active"></span><span></span><span></span></div>
         </div>
       </div>
     </div>
