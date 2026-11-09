@@ -36,14 +36,20 @@ export default function AppView({
   const displayName = email ? email.split("@")[0] : "User";
 
   // Fetch Account Usage & Documents
+    // Fetch Account Usage & Documents
   useEffect(() => {
     if (!email) return;
 
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || "https://doctrans-backend.onrender.com";
+    // This strictly removes any trailing slashes from the URL
+    const rawUrl = import.meta.env.VITE_BACKEND_URL || "https://doctrans-6o6h.onrender.com";
+    const backendUrl = rawUrl.replace(/\/+$/, ""); 
     
     // Fetch Account Status (Usage)
     fetch(`${backendUrl}/api/account?email=${encodeURIComponent(email)}`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error("Backend returned an error");
+        return res.json();
+      })
       .then(data => {
         if (data.subscription) {
           setTranslationsUsed(data.subscription.translationsUsed || 0);
@@ -51,10 +57,13 @@ export default function AppView({
       })
       .catch(err => console.error("Error fetching account:", err));
 
-    // Fetch Documents
+    // Fetch Documents History
     if (activeTab === "documents") {
       fetch(`${backendUrl}/api/documents?email=${encodeURIComponent(email)}`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error("Backend returned an error");
+          return res.json();
+        })
         .then(data => setDocuments(data))
         .catch(err => console.error("Error fetching documents:", err));
     }
