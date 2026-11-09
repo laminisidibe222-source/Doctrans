@@ -10,7 +10,7 @@ import "../doctrans.css";
 export default function AppView({
   onOpenCheckout, plan, locale, setLocale, onLogout, email, setEmail,
 }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Default closed for mobile
   const [activeTab, setActiveTab] = useState("dashboard");
   
   // Translation State
@@ -24,7 +24,7 @@ export default function AppView({
   const [translatedDoc, setTranslatedDoc] = useState(null); 
   const [documents, setDocuments] = useState([]); 
   const [translationsUsed, setTranslationsUsed] = useState(0);
-  const [selectedDoc, setSelectedDoc] = useState(null); // State for the Modal
+  const [selectedDoc, setSelectedDoc] = useState(null);
   const MAX_FREE_TRANSLATIONS = 2;
 
   // Settings State
@@ -36,20 +36,14 @@ export default function AppView({
   const displayName = email ? email.split("@")[0] : "User";
 
   // Fetch Account Usage & Documents
-    // Fetch Account Usage & Documents
   useEffect(() => {
     if (!email) return;
 
-    // This strictly removes any trailing slashes from the URL
     const rawUrl = import.meta.env.VITE_BACKEND_URL || "https://doctrans-6o6h.onrender.com";
     const backendUrl = rawUrl.replace(/\/+$/, ""); 
     
-    // Fetch Account Status (Usage)
     fetch(`${backendUrl}/api/account?email=${encodeURIComponent(email)}`)
-      .then(res => {
-        if (!res.ok) throw new Error("Backend returned an error");
-        return res.json();
-      })
+      .then(res => res.json())
       .then(data => {
         if (data.subscription) {
           setTranslationsUsed(data.subscription.translationsUsed || 0);
@@ -57,13 +51,9 @@ export default function AppView({
       })
       .catch(err => console.error("Error fetching account:", err));
 
-    // Fetch Documents History
     if (activeTab === "documents") {
       fetch(`${backendUrl}/api/documents?email=${encodeURIComponent(email)}`)
-        .then(res => {
-          if (!res.ok) throw new Error("Backend returned an error");
-          return res.json();
-        })
+        .then(res => res.json())
         .then(data => setDocuments(data))
         .catch(err => console.error("Error fetching documents:", err));
     }
@@ -102,7 +92,8 @@ export default function AppView({
     formData.append("preserveLayout", preserveLayout);
 
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || "https://doctrans-backend.onrender.com";
+      const rawUrl = import.meta.env.VITE_BACKEND_URL || "https://doctrans-6o6h.onrender.com";
+      const backendUrl = rawUrl.replace(/\/+$/, "");
 
       const response = await fetch(`${backendUrl}/api/translate`, {
         method: "POST",
@@ -131,11 +122,7 @@ export default function AppView({
       
     } catch (error) {
       console.error(error);
-      if (error.message.includes("Server error") || error.message.includes("JSON")) {
-        alert("The translation server is waking up or timed out. Please wait 30 seconds and try again.");
-      } else {
-        alert(error.message);
-      }
+      alert("The translation server is waking up or timed out. Please wait 30 seconds and try again.");
     } finally {
       setTranslating(false);
     }
@@ -165,19 +152,19 @@ export default function AppView({
         </div>
 
         <nav className="sidebar-nav">
-          <button className={`nav-btn ${activeTab === "dashboard" ? "active" : ""}`} onClick={() => setActiveTab("dashboard")}>
+          <button className={`nav-btn ${activeTab === "dashboard" ? "active" : ""}`} onClick={() => { setActiveTab("dashboard"); setIsSidebarOpen(false); }}>
             <LayoutDashboard size={18} /> Dashboard
           </button>
-          <button className={`nav-btn ${activeTab === "new" ? "active" : ""}`} onClick={() => setActiveTab("new")}>
+          <button className={`nav-btn ${activeTab === "new" ? "active" : ""}`} onClick={() => { setActiveTab("new"); setIsSidebarOpen(false); }}>
             <Plus size={18} /> New Translation
           </button>
-          <button className={`nav-btn ${activeTab === "documents" ? "active" : ""}`} onClick={() => setActiveTab("documents")}>
+          <button className={`nav-btn ${activeTab === "documents" ? "active" : ""}`} onClick={() => { setActiveTab("documents"); setIsSidebarOpen(false); }}>
             <FileText size={18} /> My Documents
           </button>
-          <button className={`nav-btn ${activeTab === "billing" ? "active" : ""}`} onClick={() => setActiveTab("billing")}>
+          <button className={`nav-btn ${activeTab === "billing" ? "active" : ""}`} onClick={() => { setActiveTab("billing"); setIsSidebarOpen(false); }}>
             <CreditCard size={18} /> Billing
           </button>
-          <button className={`nav-btn ${activeTab === "settings" ? "active" : ""}`} onClick={() => setActiveTab("settings")}>
+          <button className={`nav-btn ${activeTab === "settings" ? "active" : ""}`} onClick={() => { setActiveTab("settings"); setIsSidebarOpen(false); }}>
             <Settings size={18} /> Settings
           </button>
         </nav>
@@ -197,6 +184,7 @@ export default function AppView({
       <main className="eduplex-main">
         <header className="eduplex-header">
           <div className="header-greeting">
+            {/* HAMBURGER MENU BUTTON */}
             <button className="mobile-menu-btn" onClick={() => setIsSidebarOpen(true)}>
               <Menu size={24} color="#111827" />
             </button>
@@ -291,8 +279,6 @@ export default function AppView({
           {activeTab === "new" && (
             <div className="translation-workspace">
               <div className="translation-card">
-                
-                {/* PAYWALL */}
                 {(!plan || plan.name === "Free") && translationsUsed >= MAX_FREE_TRANSLATIONS ? (
                   <div className="translation-success-state">
                     <div className="success-icon-wrapper" style={{ background: '#fee2e2' }}>
@@ -306,7 +292,6 @@ export default function AppView({
                     </button>
                   </div>
                 ) : translatedDoc ? (
-                  // SUCCESS STATE
                   <div className="translation-success-state">
                     <div className="success-icon-wrapper"><Check size={40} className="success-icon" /></div>
                     <h3>Translation Complete!</h3>
@@ -317,7 +302,6 @@ export default function AppView({
                     <button className="btn-outline-sm mt-4" onClick={resetTranslation}>Translate another document</button>
                   </div>
                 ) : (
-                  // UPLOAD FORM
                   <>
                     <div 
                       className={`beautiful-dropzone ${isDragging ? "dragging" : ""} ${selectedFile ? "has-file" : ""}`}
@@ -376,9 +360,7 @@ export default function AppView({
             </div>
           )}
 
-          {/* =========================================
-              DOCUMENTS VIEW (UPDATED WITH MODAL)
-          ========================================= */}
+          {/* DOCUMENTS VIEW */}
           {activeTab === "documents" && (
             <div className="documents-table-card">
               <table className="doc-table">
@@ -570,9 +552,7 @@ export default function AppView({
         </div>
       </main>
 
-      {/* =========================================
-          DOCUMENT DETAILS MODAL
-      ========================================= */}
+      {/* DOCUMENT DETAILS MODAL */}
       {selectedDoc && (
         <div className="doc-modal-overlay" onClick={() => setSelectedDoc(null)}>
           <div className="doc-modal" onClick={(e) => e.stopPropagation()}>
