@@ -3074,3 +3074,125 @@ body, html, #root {
     font-size: 0.85rem;
   }
 }
+
+/* =========================================
+   ULTIMATE MOBILE RESPONSIVE FIXES
+   ========================================= */
+@media (max-width: 900px) {
+  
+  /* 1. Stop Horizontal Scrolling Everywhere */
+  html, body, #root, .eduplex-layout {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden !important;
+  }
+
+  /* 2. Fix the Main Layout (Allow vertical scrolling) */
+  .eduplex-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: 0 !important;
+  }
+
+  .eduplex-main {
+    padding: 1rem !important;
+    margin-left: 0 !important;
+    width: 100% !important;
+    height: auto;
+    overflow-y: auto;
+  }
+
+  /* 3. Stack the Dashboard Grid (Main & Sidebar) */
+  .dashboard-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+    width: 100% !important;
+  }
+
+  .grid-main, .grid-side {
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  /* 4. Stack the Quick Action Cards */
+  .quick-actions-row {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    width: 100% !important;
+  }
+
+  .action-card {
+    width: 100% !important;
+  }
+
+  /* 5. Fix the Documents Table (Make it swipeable) */
+  .documents-table-card {
+    width: 100% !important;
+    padding: 0 !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .doc-table {
+    min-width: 600px !important; /* Forces table to stay wide, allowing scroll */
+  }
+
+  /* 6. Fix the Header */
+  .eduplex-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1rem !important;
+    padding: 1rem !important;
+  }
+
+  .header-actions {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: space-between !important;
+  }
+
+  .search-bar {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  /* 7. Fix the Billing Cards */
+  .billing-top-row {
+    grid-template-columns: 1fr !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .upgrade-cards-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+
+  /* 8. Fix the Auth Pages (Login/Signup) */
+  .auth-wrapper {
+    height: 100vh !important;
+    overflow-y: auto !important; /* Allow scrolling if form is long */
+    align-items: flex-start !important;
+    padding: 1rem !important;
+  }
+  
+  .auth-container {
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: 100% !important;
+  }
+
+  .auth-left {
+    width: 100% !important;
+    padding: 2rem 1.5rem !important;
+  }
+
+  /* Hide the blue illustration on mobile to save space */
+  .auth-right {
+    display: none !important; 
+  }
+}
