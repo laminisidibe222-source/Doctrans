@@ -3146,3 +3146,70 @@ body, html, #root {
     gap: 0.5rem !important;
   }
 }
+
+/* =========================================
+   FIX: PROBLEM / SOLUTION MOBILE STACKING
+   ========================================= */
+@media screen and (max-width: 900px) {
+  
+  /* 1. Force the container to be a single vertical column */
+  .problem-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1.5rem !important;
+    padding: 0 1rem !important;
+    width: 100% !important;
+  }
+
+  /* 2. Make sure each card takes up the full width */
+  .problem-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 2rem 1.5rem !important;
+  }
+
+  /* 3. Fix the text size so it reads nicely */
+  .problem-card h3 {
+    font-size: 1.3rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .problem-card p {
+    font-size: 0.95rem !important;
+    line-height: 1.5 !important;
+  }
+}
+
+/* =========================================
+   FIX: COMPARISON TABLE ON MOBILE
+   ========================================= */
+@media screen and (max-width: 900px) {
+  
+  /* 1. Make the container swipeable */
+  .landing-comparison .comparison-table-wrapper {
+    width: 100% !important;
+    overflow-x: auto !important; /* Enables horizontal scrolling */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    padding: 0 1rem !important;
+    box-sizing: border-box;
+  }
+
+  /* 2. Force the table to be wider than the screen so it doesn't squish */
+  .comparison-table {
+    min-width: 550px !important; 
+  }
+
+  /* 3. Adjust spacing and font size to look clean */
+  .comparison-table th, 
+  .comparison-table td {
+    padding: 1rem 0.5rem !important;
+    font-size: 0.85rem !important;
+    white-space: nowrap !important; /* Prevents words from breaking into vertical letters */
+  }
+
+  /* 4. Make sure the headers are readable */
+  .comparison-table th {
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+  }
+}
