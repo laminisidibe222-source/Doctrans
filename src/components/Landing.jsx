@@ -13,7 +13,6 @@ export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup, l
   return (
     <div className="landing-page">
       
-      {/* NAVBAR */}
       <nav className="landing-navbar">
         <div className="brand-logo" onClick={goApp} style={{ cursor: 'pointer' }}>
           <div className="brand-icon">D</div>
@@ -34,7 +33,6 @@ export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup, l
         </div>
       </nav>
 
-      {/* HERO */}
       <header className="landing-hero">
         <div className="hero-text">
           <div className="hero-badge">
@@ -70,7 +68,6 @@ export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup, l
         </div>
       </header>
 
-      {/* SOCIAL PROOF */}
       <section className="landing-proof">
         <p className="proof-title">{t.landing.socialProofTitle}</p>
         <div className="proof-logos">
@@ -78,7 +75,6 @@ export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup, l
         </div>
       </section>
 
-      {/* PROBLEM / SOLUTION */}
       <section className="landing-problem">
         <div className="problem-grid">
           <div className="problem-card problem">
@@ -92,7 +88,6 @@ export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup, l
         </div>
       </section>
 
-      {/* FEATURES */}
       <section id="features" className="landing-features">
         <div className="section-header">
           <h2>{t.landing.featuresTitle}</h2>
@@ -109,7 +104,6 @@ export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup, l
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
       <section id="how-it-works" className="landing-steps">
         <div className="section-header">
           <h2>{t.landing.howTitle}</h2>
@@ -124,7 +118,6 @@ export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup, l
         </div>
       </section>
 
-      {/* TRUST */}
       <section className="landing-trust">
         <div className="trust-content">
           <h2>{t.landing.trustTitle}</h2>
@@ -138,7 +131,6 @@ export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup, l
         </div>
       </section>
 
-      {/* COMPARISON */}
       <section className="landing-comparison">
         <div className="section-header">
           <h2>{t.landing.compTitle}</h2>
@@ -159,7 +151,6 @@ export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup, l
         </div>
       </section>
 
-      {/* PRICING */}
       <section id="pricing" className="landing-pricing">
         <div className="section-header">
           <h2>{t.landing.priceTitle}</h2>
@@ -186,7 +177,6 @@ export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup, l
               <li><CheckCircle2 size={16} /> {t.landing.pricePlan2Feat2}</li>
               <li><CheckCircle2 size={16} /> {t.landing.pricePlan2Feat3}</li>
             </ul>
-            {/* UPDATED TO 3000 XOF */}
             <button onClick={() => goPricingCheckout("Pro", 3000)} className="btn-primary w-full">
               {t.landing.priceUpgradeTo} {t.landing.pricePlan2}
             </button>
@@ -200,7 +190,6 @@ export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup, l
               <li><CheckCircle2 size={16} /> {t.landing.pricePlan3Feat2}</li>
               <li><CheckCircle2 size={16} /> {t.landing.pricePlan3Feat3}</li>
             </ul>
-            {/* UPDATED TO 7500 XOF */}
             <button onClick={() => goPricingCheckout("Équipe", 7500)} className="btn-outline w-full">
               {t.landing.priceUpgradeTo} {t.landing.pricePlan3}
             </button>
@@ -208,7 +197,6 @@ export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup, l
         </div>
       </section>
 
-      {/* FAQ */}
       <section id="faq" className="landing-faq">
         <div className="section-header">
           <h2>{t.landing.faqTitle}</h2>
@@ -222,7 +210,6 @@ export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup, l
         </div>
       </section>
 
-      {/* FINAL CTA */}
       <section className="landing-final-cta-wrapper">
         <div className="landing-final-cta">
           <div className="cta-glow cta-glow-1"></div>
@@ -240,7 +227,6 @@ export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup, l
         </div>
       </section>
 
-      {/* FOOTER */}
       <footer className="landing-footer">
         <div className="footer-grid">
           <div className="footer-brand">

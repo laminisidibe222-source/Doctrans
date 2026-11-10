@@ -50,9 +50,16 @@ const translator = new deepl.Translator(process.env.DEEPL_API_KEY, {
 
 const MAX_FREE_TRANSLATIONS = 2;
 
+const PLAN_LIMITS = {
+  "Free": 2,
+  "Pro": 12,
+  "Équipe": 20
+};
+
 // ==========================================
 // 2. TRANSLATION ROUTE
 // ==========================================
+
 app.post("/api/translate", upload.single("file"), async (req, res) => {
   let client;
   try {
@@ -79,11 +86,12 @@ app.post("/api/translate", upload.single("file"), async (req, res) => {
     }
 
     const currentUsage = user.translations_used || 0;
+    const userLimit = PLAN_LIMITS[user.plan] || PLAN_LIMITS["Free"];
 
     // Check Limit
-    if (user.plan === "Free" && currentUsage >= MAX_FREE_TRANSLATIONS) {
+    if (currentUsage >= userLimit) {
       try { fs.unlinkSync(file.path); } catch (e) {}
-      return res.status(403).json({ error: "FREE_LIMIT_REACHED" });
+      return res.status(403).json({ error: "LIMIT_REACHED" });
     }
 
     // Translate
@@ -128,7 +136,8 @@ app.post("/api/translate", upload.single("file"), async (req, res) => {
     res.status(200).json({ 
       success: true, 
       document: docRes.rows[0], 
-      translationsUsed: newUsageCount 
+      translationsUsed: newUsageCount,
+      maxTranslations: userLimit
     });
 
   } catch (error) {
@@ -155,16 +164,24 @@ app.get("/api/account", async (req, res) => {
     
     if (rows.length === 0) {
       return res.status(200).json({ 
-        subscription: { plan: "Free", status: "inactive", translationsUsed: 0 } 
+        subscription: { 
+          plan: "Free", 
+          status: "inactive", 
+          translationsUsed: 0,
+          maxTranslations: PLAN_LIMITS["Free"]
+        } 
       });
     }
 
     const user = rows[0];
+    const userLimit = PLAN_LIMITS[user.plan] || PLAN_LIMITS["Free"];
+
     res.status(200).json({ 
       subscription: { 
         plan: user.plan, 
         status: user.plan !== "Free" ? "active" : "inactive",
-        translationsUsed: user.translations_used || 0
+        translationsUsed: user.translations_used || 0,
+        maxTranslations: userLimit
       } 
     });
   } catch (error) {

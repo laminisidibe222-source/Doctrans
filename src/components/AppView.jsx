@@ -17,21 +17,18 @@ export default function AppView({
   
   const t = translations[locale] || translations["en"];
 
-  // Translation State
   const [sourceLang, setSourceLang] = useState("Auto-Detect");
   const [targetLang, setTargetLang] = useState("French (FR)");
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   
-  // API & Usage State
   const [translating, setTranslating] = useState(false);
   const [translatedDoc, setTranslatedDoc] = useState(null); 
   const [documents, setDocuments] = useState([]); 
   const [translationsUsed, setTranslationsUsed] = useState(0);
+  const [maxTranslations, setMaxTranslations] = useState(2); // NEW DYNAMIC STATE
   const [selectedDoc, setSelectedDoc] = useState(null);
-  const MAX_FREE_TRANSLATIONS = 2;
 
-  // Settings State
   const [defaultLang, setDefaultLang] = useState("French (FR)");
   const [preserveLayout, setPreserveLayout] = useState(true);
   const [emailNotifs, setEmailNotifs] = useState(true);
@@ -39,7 +36,6 @@ export default function AppView({
   const fileInputRef = useRef(null);
   const displayName = email ? email.split("@")[0] : "User";
 
-  // Fetch Account Usage & Documents
   useEffect(() => {
     if (!email) return;
 
@@ -49,7 +45,12 @@ export default function AppView({
     fetch(`${backendUrl}/api/account?email=${encodeURIComponent(email)}`)
       .then(res => res.json())
       .then(data => {
-        if (data.subscription) setTranslationsUsed(data.subscription.translationsUsed || 0);
+        if (data.subscription) {
+          setTranslationsUsed(data.subscription.translationsUsed || 0);
+          if (data.subscription.maxTranslations) {
+            setMaxTranslations(data.subscription.maxTranslations);
+          }
+        }
       })
       .catch(err => console.error("Error fetching account:", err));
 
@@ -107,7 +108,10 @@ export default function AppView({
       const data = await response.json();
 
       if (!response.ok) {
-        if (data.error === "FREE_LIMIT_REACHED") { onOpenCheckout("Pro", 3000); return; }
+        if (data.error === "LIMIT_REACHED" || data.error === "FREE_LIMIT_REACHED") { 
+          onOpenCheckout("Pro", 3000); 
+          return; 
+        }
         throw new Error(data.error || "Translation failed.");
       }
 
@@ -127,7 +131,6 @@ export default function AppView({
       
       {isSidebarOpen && <div className="sidebar-backdrop" onClick={() => setIsSidebarOpen(false)}></div>}
 
-      {/* SIDEBAR */}
       <aside className={`eduplex-sidebar ${isSidebarOpen ? "open" : "closed"}`}>
         <div className="sidebar-logo">
           <div className="logo-icon-box"><span className="logo-symbol">D</span></div>
@@ -160,14 +163,12 @@ export default function AppView({
             <div className="promo-icon"><Award size={20} /></div>
             <p>{t.nav.upgrade}</p>
             <span>{t.nav.upgradeDesc}</span>
-            {/* UPDATED TO 3000 XOF */}
             <button onClick={() => onOpenCheckout("Pro", 3000)}>{t.nav.upgrade}</button>
           </div>
           <button className="logout-btn" onClick={onLogout}><LogOut size={16} /> {t.nav.logout}</button>
         </div>
       </aside>
 
-      {/* MAIN CONTENT */}
       <main className="eduplex-main">
         <header className="eduplex-header">
           <div className="header-greeting">
@@ -201,7 +202,6 @@ export default function AppView({
 
         <div className="dashboard-grid">
           
-          {/* DASHBOARD */}
           {activeTab === "dashboard" && (
             <>
               <div className="grid-main">
@@ -243,9 +243,10 @@ export default function AppView({
                     <div><h4>DocTrans {plan ? plan.name : "Free"}</h4><p>{t.dash.currentPlan}</p></div>
                   </div>
                   <p className="plan-desc">
-                    {plan && plan.name !== "Free" ? "Unlimited" : `${Math.max(0, MAX_FREE_TRANSLATIONS - translationsUsed)} / ${MAX_FREE_TRANSLATIONS}`} {t.dash.remaining}
+                    {plan && plan.name !== "Free" 
+                      ? `${Math.max(0, maxTranslations - translationsUsed)} ${t.dash.remaining}` 
+                      : `${Math.max(0, maxTranslations - translationsUsed)} / ${maxTranslations} ${t.dash.remaining}`}
                   </p>
-                  {/* UPDATED TO 3000 XOF */}
                   <button className="btn-lime" onClick={() => onOpenCheckout("Pro", 3000)}>{t.dash.upgradePlan} <ArrowUpRight size={16} /></button>
                 </div>
                 <div className="side-card">
@@ -261,18 +262,17 @@ export default function AppView({
             </>
           )}
 
-          {/* NEW TRANSLATION */}
           {activeTab === "new" && (
             <div className="translation-workspace">
               <div className="translation-card">
-                {(!plan || plan.name === "Free") && translationsUsed >= MAX_FREE_TRANSLATIONS ? (
+                {/* UPDATED TO CHECK maxTranslations DYNAMICALLY */}
+                {translationsUsed >= maxTranslations ? (
                   <div className="translation-success-state">
                     <div className="success-icon-wrapper" style={{ background: '#fee2e2' }}>
                       <Award size={40} style={{ color: '#ef4444' }} />
                     </div>
                     <h3>{t.dash.freeLimit}</h3>
                     <p>{t.dash.freeLimitSub}</p>
-                    {/* UPDATED TO 3000 XOF */}
                     <button className="btn-primary w-full mt-4" onClick={() => onOpenCheckout("Pro", 3000)}>{t.dash.upgradeNow}</button>
                   </div>
                 ) : translatedDoc ? (
@@ -340,7 +340,6 @@ export default function AppView({
             </div>
           )}
 
-          {/* DOCUMENTS */}
           {activeTab === "documents" && (
             <div className="documents-table-card">
               <table className="doc-table">
@@ -376,7 +375,6 @@ export default function AppView({
             </div>
           )}
 
-          {/* BILLING */}
           {activeTab === "billing" && (
             <div className="billing-container">
               <div className="billing-top-row">
@@ -386,12 +384,16 @@ export default function AppView({
                     <CreditCard className="plan-icon-large" />
                   </div>
                   <div className="usage-section">
-                    <div className="usage-text"><span>{t.dash.pagesUsed}</span><strong>{plan ? "Unlimited" : `${translationsUsed} / ${MAX_FREE_TRANSLATIONS}`}</strong></div>
-                    <div className="usage-bar-bg"><div className="usage-bar-fill" style={{ width: plan ? "10%" : `${(translationsUsed / MAX_FREE_TRANSLATIONS) * 100}%` }}></div></div>
+                    <div className="usage-text">
+                      <span>{t.dash.pagesUsed}</span>
+                      <strong>{translationsUsed} / {maxTranslations}</strong>
+                    </div>
+                    <div className="usage-bar-bg">
+                      <div className="usage-bar-fill" style={{ width: `${Math.min(100, (translationsUsed / maxTranslations) * 100)}%` }}></div>
+                    </div>
                   </div>
                   <div className="billing-info-row">
                     <div className="info-item"><span className="info-label">{t.dash.nextDate}</span><span className="info-value">{plan ? "Nov 22, 2026" : "N/A"}</span></div>
-                    {/* UPDATED TO XOF */}
                     <div className="info-item"><span className="info-label">{t.dash.amount}</span><span className="info-value">{plan ? `${plan.price} XOF / mo` : "0 XOF"}</span></div>
                   </div>
                 </div>
@@ -420,21 +422,19 @@ export default function AppView({
                     <div className="popular-tag">MOST POPULAR</div>
                     <div className="card-top"><h4>Pro</h4><div className="upgrade-price">3 000 XOF<span>{t.dash.mo}</span></div></div>
                     <ul className="upgrade-features">
-                      <li><Check size={18} className="check-icon" /> Unlimited pages</li>
+                      <li><Check size={18} className="check-icon" /> 12 translations / mo</li>
                       <li><Check size={18} className="check-icon" /> Layout preservation</li>
                       <li><Check size={18} className="check-icon" /> Priority support</li>
                     </ul>
-                    {/* UPDATED TO 3000 XOF */}
                     <button className="btn-primary w-full" onClick={() => onOpenCheckout("Pro", 3000)}>Upgrade</button>
                   </div>
                   <div className="upgrade-card">
                     <div className="card-top"><h4>Équipe</h4><div className="upgrade-price">7 500 XOF<span>{t.dash.mo}</span></div></div>
                     <ul className="upgrade-features">
-                      <li><Check size={18} className="check-icon" /> Everything in Pro</li>
+                      <li><Check size={18} className="check-icon" /> 20 translations / mo</li>
                       <li><Check size={18} className="check-icon" /> 5 team members</li>
                       <li><Check size={18} className="check-icon" /> Admin dashboard</li>
                     </ul>
-                    {/* UPDATED TO 7500 XOF */}
                     <button className="btn-outline w-full" onClick={() => onOpenCheckout("Équipe", 7500)}>Upgrade</button>
                   </div>
                 </div>
@@ -442,7 +442,6 @@ export default function AppView({
             </div>
           )}
 
-          {/* SETTINGS */}
           {activeTab === "settings" && (
             <div className="settings-container">
               <div className="settings-card">
@@ -492,7 +491,6 @@ export default function AppView({
         </div>
       </main>
 
-      {/* MODAL */}
       {selectedDoc && (
         <div className="doc-modal-overlay" onClick={() => setSelectedDoc(null)}>
           <div className="doc-modal" onClick={(e) => e.stopPropagation()}>

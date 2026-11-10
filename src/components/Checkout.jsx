@@ -7,7 +7,6 @@ export default function Checkout({ plan, price, email, onEmailCaptured, onClose 
   const [error, setError] = useState(null);
   const [inputEmail, setInputEmail] = useState(email || "");
 
-  // Define available plans with XOF prices
   const availablePlans = [
     { name: "Ponctuel", price: 0, desc: "Gratuit", displayPrice: "0 XOF" },
     { name: "Pro", price: 3000, desc: "/ mois", displayPrice: "3 000 XOF" },
@@ -36,7 +35,7 @@ export default function Checkout({ plan, price, email, onEmailCaptured, onClose 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           plan: selectedPlan.name, 
-          price: selectedPlan.price, // Sends 3000 or 7500
+          price: selectedPlan.price, 
           email: inputEmail 
         }),
       });
