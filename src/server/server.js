@@ -6,6 +6,7 @@ const fs = require("fs");
 const deepl = require("deepl-node");
 const { Pool } = require("pg"); // <-- Using pg for Neon
 require("dotenv").config();
+const axios = require('axios');
 
 const app = express();
 
@@ -192,7 +193,6 @@ app.get("/api/documents", async (req, res) => {
   }
 });
 
-const axios = require('axios');
 
 // ==========================================
 // 1. CREATE SASPAY CHECKOUT SESSION
@@ -205,21 +205,21 @@ app.post('/api/saspay/create-checkout', async (req, res) => {
     }
 
     const apiKey = process.env.SASPAY_API_KEY;
-    // Base URL is https://api.saspay.me/api/v1
-    // Endpoint is /checkout-sessions/
     const baseUrl = 'https://api.saspay.me/api/v1';
     const endpoint = `${baseUrl}/checkout-sessions/`;
 
-    // The payload for SasPay's checkout session endpoint
+    // Extract a customer name from the email as a fallback
+    // e.g., "lamini.sidibe@gmail.com" becomes "Lamini Sidibe"
+    const nameFromEmail = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
     const payload = {
       amount: price.toString(),
-      currency: "XOF", // Adjust to your target currency (e.g., XAF, GHS)
+      currency: "XOF", 
       description: `DocTrans ${plan} Subscription`,
-      country: "SN", // Senegal
+      country: "SN", 
       customer_email: email,
-      // URL where the user is redirected after a successful payment
+      customer_name: nameFromEmail, // <-- ADD THIS LINE
       return_url: `https://doc-trans-frontend.vercel.app/?checkout=success`,
-      // Optional: Add metadata to identify the user/plan in your webhook
       metadata: {
         plan: plan,
         email: email
@@ -233,7 +233,6 @@ app.post('/api/saspay/create-checkout', async (req, res) => {
       }
     });
 
-    // The response contains the checkout_url for redirection
     if (response.data.checkout_url) {
       res.json({ payment_url: response.data.checkout_url });
     } else {
@@ -241,7 +240,6 @@ app.post('/api/saspay/create-checkout', async (req, res) => {
       res.status(400).json({ error: 'Failed to create SasPay checkout session.' });
     }
   } catch (error) {
-    // Log the full error response from SasPay if it exists
     console.error('SasPay Checkout Error Details:', {
       message: error.message,
       response: error.response?.data,
