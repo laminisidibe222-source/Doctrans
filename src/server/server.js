@@ -228,9 +228,9 @@ app.get("/api/documents", async (req, res) => {
         if (rawName) customerName = rawName.replace(/\b\w/g, l => l.toUpperCase());
     }
 
-    const payload = {
-      // FORMAT AS DECIMAL STRING AS PER DOCUMENTATION: "29.00"
-      amount: Number(price).toFixed(2), 
+   const payload = {
+      // Temporarily hardcode a higher amount to test
+      amount: "1000.00", 
       currency: "XOF", 
       description: `DocTrans ${plan} Subscription`,
       customer_email: email,
@@ -240,7 +240,7 @@ app.get("/api/documents", async (req, res) => {
         plan: plan,
         email: email
       }
-    };
+  };
 
     console.log("2. 📦 [SasPay] Sending payload to SasPay:", JSON.stringify(payload, null, 2));
 
@@ -266,7 +266,8 @@ app.get("/api/documents", async (req, res) => {
     console.error("🔥 [SasPay] CRITICAL ERROR:", {
       message: error.message,
       response: error.response?.data,
-      status: error.response?.status,
+      // Add this to see the specific field errors:
+      fieldErrors: error.response?.data?.error, 
     });
     res.status(500).json({ error: 'Internal server error during checkout.' });
   }
