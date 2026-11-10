@@ -7,56 +7,55 @@ export default function Checkout({ plan, price, email, onEmailCaptured, onClose 
   const [error, setError] = useState(null);
   const [inputEmail, setInputEmail] = useState(email || "");
 
-  // Define available plans
+  // Define available plans with XOF prices
   const availablePlans = [
-    { name: "Ponctuel", price: 0, desc: "Gratuit" },
-    { name: "Pro", price: 29, desc: "/ mois" },
-    { name: "Équipe", price: 79, desc: "/ mois" }
+    { name: "Ponctuel", price: 0, desc: "Gratuit", displayPrice: "0 XOF" },
+    { name: "Pro", price: 3000, desc: "/ mois", displayPrice: "3 000 XOF" },
+    { name: "Équipe", price: 7500, desc: "/ mois", displayPrice: "7 500 XOF" }
   ];
 
-  // Initialize with the plan passed from props, or default to Pro
   const [selectedPlan, setSelectedPlan] = useState(
     availablePlans.find((p) => p.name === plan) || availablePlans[1]
   );
 
   const handlePayment = async () => {
-  if (!inputEmail) {
-    setError("Veuillez entrer votre adresse email.");
-    return;
-  }
-  
-  setLoading(true);
-  setError(null);
-  onEmailCaptured(inputEmail);
-
-  try {
-    const backendUrl = import.meta.env.VITE_BACKEND_URL.replace(/\/+$/, "");
-    
-    const res = await fetch(`${backendUrl}/api/saspay/create-checkout`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        plan: selectedPlan.name, 
-        price: selectedPlan.price, 
-        email: inputEmail 
-      }),
-    });
-
-    if (!res.ok) throw new Error("Server error");
-    
-    const data = await res.json();
-    
-    if (data.payment_url) {
-      window.location.href = data.payment_url; 
-    } else {
-      throw new Error("No payment link received.");
+    if (!inputEmail) {
+      setError("Veuillez entrer votre adresse email.");
+      return;
     }
-  } catch (err) {
-    setError("Impossible de créer la session de paiement. Veuillez réessayer.");
-  } finally {
-    setLoading(false);
-  }
-};
+    
+    setLoading(true);
+    setError(null);
+    onEmailCaptured(inputEmail);
+
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL.replace(/\/+$/, "");
+      
+      const res = await fetch(`${backendUrl}/api/saspay/create-checkout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          plan: selectedPlan.name, 
+          price: selectedPlan.price, // Sends 3000 or 7500
+          email: inputEmail 
+        }),
+      });
+
+      if (!res.ok) throw new Error("Erreur serveur");
+      
+      const data = await res.json();
+      
+      if (data.payment_url) {
+        window.location.href = data.payment_url; 
+      } else {
+        throw new Error("Aucun lien de paiement reçu.");
+      }
+    } catch (err) {
+      setError("Impossible de créer la session de paiement. Veuillez réessayer.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="checkout-overlay">
@@ -78,7 +77,6 @@ export default function Checkout({ plan, price, email, onEmailCaptured, onClose 
         )}
 
         <div className="checkout-body">
-          {/* Plan Selector Grid */}
           <div className="plan-selector">
             {availablePlans.map((p) => (
               <div 
@@ -91,7 +89,7 @@ export default function Checkout({ plan, price, email, onEmailCaptured, onClose 
                 )}
                 <h4>{p.name}</h4>
                 <div className="plan-price">
-                  {p.price}€ <span>{p.desc}</span>
+                  {p.displayPrice} <span>{p.desc}</span>
                 </div>
               </div>
             ))}
@@ -110,14 +108,14 @@ export default function Checkout({ plan, price, email, onEmailCaptured, onClose 
           <button 
             className="btn-primary checkout-btn" 
             onClick={handlePayment}
-            disabled={loading}
+            disabled={loading || selectedPlan.price === 0}
           >
             {loading ? <Loader2 className="spin" size={20} /> : <Lock size={18} />}
-            {loading ? "Traitement..." : `Payer ${selectedPlan.price}€`}
+            {loading ? "Traitement..." : selectedPlan.price === 0 ? "Plan Gratuit" : `Payer ${selectedPlan.displayPrice}`}
           </button>
           
           <p className="checkout-secure">
-            Paiement 100% sécurisé via PayDunya
+            Paiement 100% sécurisé via SasPay
           </p>
         </div>
       </div>

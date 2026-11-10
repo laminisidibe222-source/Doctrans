@@ -107,7 +107,7 @@ export default function AppView({
       const data = await response.json();
 
       if (!response.ok) {
-        if (data.error === "FREE_LIMIT_REACHED") { onOpenCheckout("Pro", 29); return; }
+        if (data.error === "FREE_LIMIT_REACHED") { onOpenCheckout("Pro", 3000); return; }
         throw new Error(data.error || "Translation failed.");
       }
 
@@ -160,7 +160,8 @@ export default function AppView({
             <div className="promo-icon"><Award size={20} /></div>
             <p>{t.nav.upgrade}</p>
             <span>{t.nav.upgradeDesc}</span>
-            <button onClick={() => onOpenCheckout("Pro", 29)}>{t.nav.upgrade}</button>
+            {/* UPDATED TO 3000 XOF */}
+            <button onClick={() => onOpenCheckout("Pro", 3000)}>{t.nav.upgrade}</button>
           </div>
           <button className="logout-btn" onClick={onLogout}><LogOut size={16} /> {t.nav.logout}</button>
         </div>
@@ -244,7 +245,8 @@ export default function AppView({
                   <p className="plan-desc">
                     {plan && plan.name !== "Free" ? "Unlimited" : `${Math.max(0, MAX_FREE_TRANSLATIONS - translationsUsed)} / ${MAX_FREE_TRANSLATIONS}`} {t.dash.remaining}
                   </p>
-                  <button className="btn-lime" onClick={() => onOpenCheckout("Pro", 29)}>{t.dash.upgradePlan} <ArrowUpRight size={16} /></button>
+                  {/* UPDATED TO 3000 XOF */}
+                  <button className="btn-lime" onClick={() => onOpenCheckout("Pro", 3000)}>{t.dash.upgradePlan} <ArrowUpRight size={16} /></button>
                 </div>
                 <div className="side-card">
                   <div className="card-header"><h3>{t.dash.recentAct}</h3></div>
@@ -270,7 +272,8 @@ export default function AppView({
                     </div>
                     <h3>{t.dash.freeLimit}</h3>
                     <p>{t.dash.freeLimitSub}</p>
-                    <button className="btn-primary w-full mt-4" onClick={() => onOpenCheckout("Pro", 29)}>{t.dash.upgradeNow}</button>
+                    {/* UPDATED TO 3000 XOF */}
+                    <button className="btn-primary w-full mt-4" onClick={() => onOpenCheckout("Pro", 3000)}>{t.dash.upgradeNow}</button>
                   </div>
                 ) : translatedDoc ? (
                   <div className="translation-success-state">
@@ -388,7 +391,8 @@ export default function AppView({
                   </div>
                   <div className="billing-info-row">
                     <div className="info-item"><span className="info-label">{t.dash.nextDate}</span><span className="info-value">{plan ? "Nov 22, 2026" : "N/A"}</span></div>
-                    <div className="info-item"><span className="info-label">{t.dash.amount}</span><span className="info-value">{plan ? `${plan.price}€ / mo` : "0€"}</span></div>
+                    {/* UPDATED TO XOF */}
+                    <div className="info-item"><span className="info-label">{t.dash.amount}</span><span className="info-value">{plan ? `${plan.price} XOF / mo` : "0 XOF"}</span></div>
                   </div>
                 </div>
                 <div className="payment-method-card">
@@ -405,7 +409,7 @@ export default function AppView({
                 <div className="upgrade-header"><h3>{t.dash.availablePlans}</h3><p>{t.dash.choosePlan}</p></div>
                 <div className="upgrade-cards-grid">
                   <div className="upgrade-card">
-                    <div className="card-top"><h4>Ponctuel</h4><div className="upgrade-price">0€<span>{t.dash.mo}</span></div></div>
+                    <div className="card-top"><h4>Ponctuel</h4><div className="upgrade-price">0 XOF<span>{t.dash.mo}</span></div></div>
                     <ul className="upgrade-features">
                       <li><Check size={18} className="check-icon" /> 2 free translations</li>
                       <li><Check size={18} className="check-icon" /> Standard translation</li>
@@ -414,22 +418,24 @@ export default function AppView({
                   </div>
                   <div className="upgrade-card popular">
                     <div className="popular-tag">MOST POPULAR</div>
-                    <div className="card-top"><h4>Pro</h4><div className="upgrade-price">29€<span>{t.dash.mo}</span></div></div>
+                    <div className="card-top"><h4>Pro</h4><div className="upgrade-price">3 000 XOF<span>{t.dash.mo}</span></div></div>
                     <ul className="upgrade-features">
                       <li><Check size={18} className="check-icon" /> Unlimited pages</li>
                       <li><Check size={18} className="check-icon" /> Layout preservation</li>
                       <li><Check size={18} className="check-icon" /> Priority support</li>
                     </ul>
-                    <button className="btn-primary w-full" onClick={() => onOpenCheckout("Pro", 29)}>Upgrade</button>
+                    {/* UPDATED TO 3000 XOF */}
+                    <button className="btn-primary w-full" onClick={() => onOpenCheckout("Pro", 3000)}>Upgrade</button>
                   </div>
                   <div className="upgrade-card">
-                    <div className="card-top"><h4>Équipe</h4><div className="upgrade-price">79€<span>{t.dash.mo}</span></div></div>
+                    <div className="card-top"><h4>Équipe</h4><div className="upgrade-price">7 500 XOF<span>{t.dash.mo}</span></div></div>
                     <ul className="upgrade-features">
                       <li><Check size={18} className="check-icon" /> Everything in Pro</li>
                       <li><Check size={18} className="check-icon" /> 5 team members</li>
                       <li><Check size={18} className="check-icon" /> Admin dashboard</li>
                     </ul>
-                    <button className="btn-outline w-full" onClick={() => onOpenCheckout("Équipe", 79)}>Upgrade</button>
+                    {/* UPDATED TO 7500 XOF */}
+                    <button className="btn-outline w-full" onClick={() => onOpenCheckout("Équipe", 7500)}>Upgrade</button>
                   </div>
                 </div>
               </div>

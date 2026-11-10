@@ -8,7 +8,6 @@ import { translations } from "../i18n";
 import "../doctrans.css";
 
 export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup, locale, setLocale }) {
-  // Load translations
   const t = translations[locale] || translations["en"];
 
   return (
@@ -169,7 +168,7 @@ export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup, l
         <div className="pricing-cards">
           <div className="pricing-card">
             <h3>{t.landing.pricePlan1}</h3>
-            <div className="price">0€<span>/{locale === 'fr' ? 'mois' : 'mo'}</span></div>
+            <div className="price">0 XOF<span>/{locale === 'fr' ? 'mois' : 'mo'}</span></div>
             <p className="pricing-desc">{t.landing.pricePlan1Desc}</p>
             <ul>
               <li><CheckCircle2 size={16} /> {t.landing.pricePlan1Feat1}</li>
@@ -180,27 +179,29 @@ export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup, l
           <div className="pricing-card popular">
             <div className="popular-badge">{t.landing.popular}</div>
             <h3>{t.landing.pricePlan2}</h3>
-            <div className="price">29€<span>/{locale === 'fr' ? 'mois' : 'mo'}</span></div>
+            <div className="price">3 000 XOF<span>/{locale === 'fr' ? 'mois' : 'mo'}</span></div>
             <p className="pricing-desc">{t.landing.pricePlan2Desc}</p>
             <ul>
               <li><CheckCircle2 size={16} /> {t.landing.pricePlan2Feat1}</li>
               <li><CheckCircle2 size={16} /> {t.landing.pricePlan2Feat2}</li>
               <li><CheckCircle2 size={16} /> {t.landing.pricePlan2Feat3}</li>
             </ul>
-            <button onClick={() => goPricingCheckout("Pro", 29)} className="btn-primary w-full">
+            {/* UPDATED TO 3000 XOF */}
+            <button onClick={() => goPricingCheckout("Pro", 3000)} className="btn-primary w-full">
               {t.landing.priceUpgradeTo} {t.landing.pricePlan2}
             </button>
           </div>
           <div className="pricing-card">
             <h3>{t.landing.pricePlan3}</h3>
-            <div className="price">79€<span>/{locale === 'fr' ? 'mois' : 'mo'}</span></div>
+            <div className="price">7 500 XOF<span>/{locale === 'fr' ? 'mois' : 'mo'}</span></div>
             <p className="pricing-desc">{t.landing.pricePlan3Desc}</p>
             <ul>
               <li><CheckCircle2 size={16} /> {t.landing.pricePlan3Feat1}</li>
               <li><CheckCircle2 size={16} /> {t.landing.pricePlan3Feat2}</li>
               <li><CheckCircle2 size={16} /> {t.landing.pricePlan3Feat3}</li>
             </ul>
-            <button onClick={() => goPricingCheckout("Équipe", 79)} className="btn-outline w-full">
+            {/* UPDATED TO 7500 XOF */}
+            <button onClick={() => goPricingCheckout("Équipe", 7500)} className="btn-outline w-full">
               {t.landing.priceUpgradeTo} {t.landing.pricePlan3}
             </button>
           </div>
