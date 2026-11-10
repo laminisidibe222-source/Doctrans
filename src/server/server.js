@@ -197,7 +197,6 @@ app.get("/api/documents", async (req, res) => {
 // ==========================================
 // 1. CREATE SASPAY CHECKOUT SESSION
 // ==========================================
-const axios = require('axios'); // Make sure this is at the top of server.js!
 
 app.post('/api/saspay/create-checkout', async (req, res) => {
   console.log("1. 🚀 [SasPay] Checkout route hit. Body:", req.body);
