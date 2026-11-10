@@ -198,13 +198,17 @@ app.get("/api/documents", async (req, res) => {
 // 1. CREATE SASPAY CHECKOUT SESSION
 // ==========================================
 
-app.post('/api/saspay/create-checkout', async (req, res) => {
+
+
+// ==========================================
+// 1. CREATE SASPAY CHECKOUT SESSION
+// ==========================================
+ app.post('/api/saspay/create-checkout', async (req, res) => {
   console.log("1. 🚀 [SasPay] Checkout route hit. Body:", req.body);
 
   try {
     const { plan, price, email } = req.body;
     if (!plan || !price || !email) {
-      console.log("❌ Missing fields:", { plan, price, email });
       return res.status(400).json({ error: "Plan, price, and email are required." });
     }
 
@@ -225,12 +229,12 @@ app.post('/api/saspay/create-checkout', async (req, res) => {
     }
 
     const payload = {
-      amount: price.toString(),
+      // FORMAT AS DECIMAL STRING AS PER DOCUMENTATION: "29.00"
+      amount: Number(price).toFixed(2), 
       currency: "XOF", 
       description: `DocTrans ${plan} Subscription`,
-      country: "SN", 
       customer_email: email,
-      customer_name: customerName, 
+      customer_name: customerName,
       return_url: `https://doc-trans-frontend.vercel.app/?checkout=success`,
       metadata: {
         plan: plan,
@@ -249,8 +253,11 @@ app.post('/api/saspay/create-checkout', async (req, res) => {
 
     console.log("3. ✅ [SasPay] Response from SasPay:", response.data);
 
-    if (response.data.checkout_url) {
-      res.json({ payment_url: response.data.checkout_url });
+    // Handle the standard envelope { success: true, data: {...} } OR direct response
+    const checkoutUrl = response.data?.data?.checkout_url || response.data?.checkout_url;
+
+    if (checkoutUrl) {
+      res.json({ payment_url: checkoutUrl });
     } else {
       console.log("❌ [SasPay] No checkout_url in response");
       res.status(400).json({ error: 'Failed to create SasPay checkout session.' });
