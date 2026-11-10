@@ -4,7 +4,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const deepl = require("deepl-node");
-const { Pool } = require("pg"); // <-- Using pg for Neon
+const { Pool } = require("pg");
 require("dotenv").config();
 const axios = require('axios');
 
@@ -36,7 +36,6 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage, limits: { fileSize: 50 * 1024 * 1024 } });
 
 // Initialize Neon Database Pool
-// Neon requires SSL. Setting rejectUnauthorized to false is standard for cloud providers.
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
@@ -193,17 +192,10 @@ app.get("/api/documents", async (req, res) => {
   }
 });
 
-
 // ==========================================
-// 1. CREATE SASPAY CHECKOUT SESSION
+// 5. CREATE SASPAY CHECKOUT SESSION
 // ==========================================
-
-
-
-// ==========================================
-// 1. CREATE SASPAY CHECKOUT SESSION
-// ==========================================
- app.post('/api/saspay/create-checkout', async (req, res) => {
+app.post('/api/saspay/create-checkout', async (req, res) => {
   console.log("1. 🚀 [SasPay] Checkout route hit. Body:", req.body);
 
   try {
@@ -228,9 +220,9 @@ app.get("/api/documents", async (req, res) => {
         if (rawName) customerName = rawName.replace(/\b\w/g, l => l.toUpperCase());
     }
 
-   const payload = {
-      // Temporarily hardcode a higher amount to test
-      amount: "1000.00", 
+    const payload = {
+      // FIXED: Dynamically use the price from the frontend and format it as a decimal string
+      amount: Number(price).toFixed(2), 
       currency: "XOF", 
       description: `DocTrans ${plan} Subscription`,
       customer_email: email,
@@ -240,7 +232,7 @@ app.get("/api/documents", async (req, res) => {
         plan: plan,
         email: email
       }
-  };
+    };
 
     console.log("2. 📦 [SasPay] Sending payload to SasPay:", JSON.stringify(payload, null, 2));
 
@@ -266,13 +258,15 @@ app.get("/api/documents", async (req, res) => {
     console.error("🔥 [SasPay] CRITICAL ERROR:", {
       message: error.message,
       response: error.response?.data,
-      // Add this to see the specific field errors:
       fieldErrors: error.response?.data?.error, 
     });
     res.status(500).json({ error: 'Internal server error during checkout.' });
   }
 });
 
+// ==========================================
+// 6. SASPAY WEBHOOK HANDLER
+// ==========================================
 app.post('/api/saspay/webhook', async (req, res) => {
   try {
     const { event, data } = req.body;
@@ -283,18 +277,16 @@ app.post('/api/saspay/webhook', async (req, res) => {
       const { email, plan } = metadata || {};
 
       if (email && plan) {
-        // SECURITY: Verify the payment via SasPay's API
-        // Endpoint: GET /payments/{payment_id}/verify/
         const apiKey = process.env.SASPAY_API_KEY;
         const paymentId = data.id; 
         const verifyUrl = `https://api.saspay.me/api/v1/payments/${paymentId}/verify/`;
 
+        // Verify with SasPay API before upgrading
         const verifyResponse = await axios.get(verifyUrl, {
           headers: { 'Authorization': `Bearer ${apiKey}` }
         });
 
         if (verifyResponse.data.status === 'SUCCESSFUL') {
-          // Update the user's plan in your Neon database
           await pool.query(
             'UPDATE app_users SET plan = $1 WHERE email = $2',
             [plan, email]
@@ -311,8 +303,9 @@ app.post('/api/saspay/webhook', async (req, res) => {
     res.status(200).send('OK'); // Acknowledge even on error to stop retries
   }
 });
+
 // ==========================================
-// 5. START SERVER
+// 7. START SERVER
 // ==========================================
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
