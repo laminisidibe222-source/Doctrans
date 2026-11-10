@@ -192,6 +192,101 @@ app.get("/api/documents", async (req, res) => {
   }
 });
 
+
+const axios = require('axios');
+
+// ==========================================
+// 1. CREATE SASPAY CHECKOUT SESSION
+// ==========================================
+app.post('/api/saspay/create-checkout', async (req, res) => {
+  try {
+    const { plan, price, email } = req.body;
+    if (!plan || !price || !email) {
+      return res.status(400).json({ error: "Plan, price, and email are required." });
+    }
+
+    const apiKey = process.env.SASPAY_API_KEY;
+    const baseUrl = 'https://api.saspay.me/api/v1';
+
+    // The payload for SasPay's checkout session endpoint.
+    // Check your SasPay API Reference for the exact required fields.
+    const payload = {
+      amount: price.toString(),
+      currency: "XOF", // Adjust for your target currency (e.g., XAF, GHS)
+      description: `DocTrans ${plan} Subscription`,
+      country: "SN", // Senegal
+      customer_email: email,
+      // The URL where the user is redirected after a successful payment
+      return_url: `https://doc-trans-frontend.vercel.app/?checkout=success`,
+      // Add metadata to identify the user and plan in your webhook
+      metadata: {
+        plan: plan,
+        email: email
+      }
+    };
+
+    const response = await axios.post(`${baseUrl}/checkout-sessions/`, payload, {
+      headers: { 
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    // The response contains the checkout_url for redirection
+    if (response.data.checkout_url) {
+      res.json({ payment_url: response.data.checkout_url });
+    } else {
+      console.error('SasPay Checkout Error:', response.data);
+      res.status(400).json({ error: 'Failed to create SasPay checkout session.' });
+    }
+  } catch (error) {
+    console.error('SasPay Checkout Error:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Internal server error during checkout.' });
+  }
+});
+
+// ==========================================
+// 2. SASPAY WEBHOOK HANDLER (IPN)
+// ==========================================
+app.post('/api/saspay/webhook', async (req, res) => {
+  try {
+    const { event, data } = req.body;
+
+    // Example event for a successful payment
+    if (event === 'payment.successful' || data?.status === 'SUCCESSFUL') {
+      const { metadata } = data;
+      const { email, plan } = metadata || {};
+
+      if (email && plan) {
+        // SECURITY: Verify the payment via SasPay's API before upgrading.
+        // Use the endpoint: GET /payments/{payment_id}/verify/
+        const apiKey = process.env.SASPAY_API_KEY;
+        const paymentId = data.id; 
+        const verifyUrl = `https://api.saspay.me/api/v1/payments/${paymentId}/verify/`;
+
+        const verifyResponse = await axios.get(verifyUrl, {
+          headers: { 'Authorization': `Bearer ${apiKey}` }
+        });
+
+        if (verifyResponse.data.status === 'SUCCESSFUL') {
+          // Update the user's plan in your Neon database
+          await pool.query(
+            'UPDATE app_users SET plan = $1 WHERE email = $2',
+            [plan, email]
+          );
+          console.log(`✅ Payment confirmed for ${email} - Plan: ${plan}`);
+        }
+      }
+    }
+
+    // SasPay expects a 200 OK to acknowledge receipt
+    res.status(200).send('OK');
+  } catch (error) {
+    console.error('SasPay Webhook Error:', error);
+    res.status(200).send('OK'); // Acknowledge even on error to stop retries
+  }
+});
+
 // ==========================================
 // 5. START SERVER
 // ==========================================

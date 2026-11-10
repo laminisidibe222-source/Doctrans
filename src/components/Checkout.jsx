@@ -20,39 +20,42 @@ export default function Checkout({ plan, price, email, onEmailCaptured, onClose 
   );
 
   const handlePayment = async () => {
-    if (!inputEmail) {
-      setError("Veuillez entrer votre adresse email.");
-      return;
-    }
-    
-    setLoading(true);
-    setError(null);
-    onEmailCaptured(inputEmail);
-
-    try {
-      const res = await fetch("http://localhost:4000/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          plan: selectedPlan.name, 
-          price: selectedPlan.price, 
-          email: inputEmail 
-        }),
-      });
-
-      if (!res.ok) throw new Error("Erreur serveur");
-      
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url; 
-      } else {
-        throw new Error("Aucun lien de paiement reçu.");
+      if (!inputEmail) {
+        setError("Veuillez entrer votre adresse email.");
+        return;
       }
-    } catch (err) {
-      setError("Impossible de joindre le serveur. Vérifie que le backend tourne sur le port 4000.");
-    } finally {
-      setLoading(false);
-    }
+      
+      setLoading(true);
+      setError(null);
+      onEmailCaptured(inputEmail);
+
+      try {
+        const backendUrl = import.meta.env.VITE_BACKEND_URL.replace(/\/+$/, "");
+        
+        const res = await fetch(`${backendUrl}/api/saspay/create-checkout`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            plan: selectedPlan.name, 
+            price: selectedPlan.price, 
+            email: inputEmail 
+          }),
+        });
+
+        if (!res.ok) throw new Error("Server error");
+        
+        const data = await res.json();
+        
+        if (data.payment_url) {
+          window.location.href = data.payment_url; 
+        } else {
+          throw new Error("No payment link received.");
+        }
+      } catch (err) {
+        setError("Impossible de créer la session de paiement. Veuillez réessayer.");
+      } finally {
+        setLoading(false);
+      }
   };
 
   return (
