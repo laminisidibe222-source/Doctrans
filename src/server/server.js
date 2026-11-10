@@ -197,20 +197,33 @@ app.get("/api/documents", async (req, res) => {
 // ==========================================
 // 1. CREATE SASPAY CHECKOUT SESSION
 // ==========================================
+const axios = require('axios'); // Make sure this is at the top of server.js!
+
 app.post('/api/saspay/create-checkout', async (req, res) => {
+  console.log("1. 🚀 [SasPay] Checkout route hit. Body:", req.body);
+
   try {
     const { plan, price, email } = req.body;
     if (!plan || !price || !email) {
+      console.log("❌ Missing fields:", { plan, price, email });
       return res.status(400).json({ error: "Plan, price, and email are required." });
     }
 
     const apiKey = process.env.SASPAY_API_KEY;
+    if (!apiKey) {
+      console.log("❌ SASPAY_API_KEY is missing from environment variables!");
+      return res.status(500).json({ error: "Server configuration error." });
+    }
+
     const baseUrl = 'https://api.saspay.me/api/v1';
     const endpoint = `${baseUrl}/checkout-sessions/`;
 
-    // Extract a customer name from the email as a fallback
-    // e.g., "lamini.sidibe@gmail.com" becomes "Lamini Sidibe"
-    const nameFromEmail = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    // Bulletproof name extraction
+    let customerName = "Valued Customer";
+    if (email && email.includes('@')) {
+        const rawName = email.split('@')[0].replace(/[._]/g, ' ').trim();
+        if (rawName) customerName = rawName.replace(/\b\w/g, l => l.toUpperCase());
+    }
 
     const payload = {
       amount: price.toString(),
@@ -218,13 +231,15 @@ app.post('/api/saspay/create-checkout', async (req, res) => {
       description: `DocTrans ${plan} Subscription`,
       country: "SN", 
       customer_email: email,
-      customer_name: nameFromEmail, // <-- ADD THIS LINE
+      customer_name: customerName, 
       return_url: `https://doc-trans-frontend.vercel.app/?checkout=success`,
       metadata: {
         plan: plan,
         email: email
       }
     };
+
+    console.log("2. 📦 [SasPay] Sending payload to SasPay:", JSON.stringify(payload, null, 2));
 
     const response = await axios.post(endpoint, payload, {
       headers: { 
@@ -233,14 +248,16 @@ app.post('/api/saspay/create-checkout', async (req, res) => {
       }
     });
 
+    console.log("3. ✅ [SasPay] Response from SasPay:", response.data);
+
     if (response.data.checkout_url) {
       res.json({ payment_url: response.data.checkout_url });
     } else {
-      console.error('SasPay Checkout Error:', response.data);
+      console.log("❌ [SasPay] No checkout_url in response");
       res.status(400).json({ error: 'Failed to create SasPay checkout session.' });
     }
   } catch (error) {
-    console.error('SasPay Checkout Error Details:', {
+    console.error("🔥 [SasPay] CRITICAL ERROR:", {
       message: error.message,
       response: error.response?.data,
       status: error.response?.status,
