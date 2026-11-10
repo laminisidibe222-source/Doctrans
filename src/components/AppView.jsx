@@ -6,13 +6,17 @@ import {
   Sliders, AlertTriangle, Trash2, Download, Eye
 } from "lucide-react";
 import "../doctrans.css";
+import { translations } from "../i18n";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 export default function AppView({
   onOpenCheckout, plan, locale, setLocale, onLogout, email, setEmail,
 }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Default closed for mobile
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
   
+  const t = translations[locale] || translations["en"];
+
   // Translation State
   const [sourceLang, setSourceLang] = useState("Auto-Detect");
   const [targetLang, setTargetLang] = useState("French (FR)");
@@ -45,9 +49,7 @@ export default function AppView({
     fetch(`${backendUrl}/api/account?email=${encodeURIComponent(email)}`)
       .then(res => res.json())
       .then(data => {
-        if (data.subscription) {
-          setTranslationsUsed(data.subscription.translationsUsed || 0);
-        }
+        if (data.subscription) setTranslationsUsed(data.subscription.translationsUsed || 0);
       })
       .catch(err => console.error("Error fetching account:", err));
 
@@ -74,7 +76,7 @@ export default function AppView({
   };
 
   const handleSwap = () => {
-    if (sourceLang === "Auto-Detect") return;
+    if (sourceLang === "Auto-Detect" || sourceLang === "Détection auto") return;
     setSourceLang(targetLang);
     setTargetLang(sourceLang);
   };
@@ -95,12 +97,9 @@ export default function AppView({
       const rawUrl = import.meta.env.VITE_BACKEND_URL || "https://doctrans-6o6h.onrender.com";
       const backendUrl = rawUrl.replace(/\/+$/, "");
 
-      const response = await fetch(`${backendUrl}/api/translate`, {
-        method: "POST",
-        body: formData,
-      });
-
+      const response = await fetch(`${backendUrl}/api/translate`, { method: "POST", body: formData });
       const contentType = response.headers.get("content-type");
+      
       if (!response.ok || !contentType || !contentType.includes("application/json")) {
         throw new Error("Server error. Please ensure the backend is running.");
       }
@@ -108,17 +107,12 @@ export default function AppView({
       const data = await response.json();
 
       if (!response.ok) {
-        if (data.error === "FREE_LIMIT_REACHED") {
-          onOpenCheckout("Pro", 29);
-          return; 
-        }
+        if (data.error === "FREE_LIMIT_REACHED") { onOpenCheckout("Pro", 29); return; }
         throw new Error(data.error || "Translation failed.");
       }
 
       setTranslatedDoc(data.document);
-      if (data.translationsUsed !== undefined) {
-        setTranslationsUsed(data.translationsUsed);
-      }
+      if (data.translationsUsed !== undefined) setTranslationsUsed(data.translationsUsed);
       
     } catch (error) {
       console.error(error);
@@ -128,18 +122,10 @@ export default function AppView({
     }
   };
 
-  const resetTranslation = () => {
-    setSelectedFile(null);
-    setTranslatedDoc(null);
-  };
-
   return (
     <div className="eduplex-layout">
       
-      {/* DARK BACKDROP FOR MOBILE */}
-      {isSidebarOpen && (
-        <div className="sidebar-backdrop" onClick={() => setIsSidebarOpen(false)}></div>
-      )}
+      {isSidebarOpen && <div className="sidebar-backdrop" onClick={() => setIsSidebarOpen(false)}></div>}
 
       {/* SIDEBAR */}
       <aside className={`eduplex-sidebar ${isSidebarOpen ? "open" : "closed"}`}>
@@ -153,30 +139,30 @@ export default function AppView({
 
         <nav className="sidebar-nav">
           <button className={`nav-btn ${activeTab === "dashboard" ? "active" : ""}`} onClick={() => { setActiveTab("dashboard"); setIsSidebarOpen(false); }}>
-            <LayoutDashboard size={18} /> Dashboard
+            <LayoutDashboard size={18} /> {t.nav.dashboard}
           </button>
           <button className={`nav-btn ${activeTab === "new" ? "active" : ""}`} onClick={() => { setActiveTab("new"); setIsSidebarOpen(false); }}>
-            <Plus size={18} /> New Translation
+            <Plus size={18} /> {t.nav.newTrans}
           </button>
           <button className={`nav-btn ${activeTab === "documents" ? "active" : ""}`} onClick={() => { setActiveTab("documents"); setIsSidebarOpen(false); }}>
-            <FileText size={18} /> My Documents
+            <FileText size={18} /> {t.nav.docs}
           </button>
           <button className={`nav-btn ${activeTab === "billing" ? "active" : ""}`} onClick={() => { setActiveTab("billing"); setIsSidebarOpen(false); }}>
-            <CreditCard size={18} /> Billing
+            <CreditCard size={18} /> {t.nav.billing}
           </button>
           <button className={`nav-btn ${activeTab === "settings" ? "active" : ""}`} onClick={() => { setActiveTab("settings"); setIsSidebarOpen(false); }}>
-            <Settings size={18} /> Settings
+            <Settings size={18} /> {t.nav.settings}
           </button>
         </nav>
 
         <div className="sidebar-footer">
           <div className="promo-card">
             <div className="promo-icon"><Award size={20} /></div>
-            <p>Upgrade to Pro</p>
-            <span>Unlock unlimited translations.</span>
-            <button onClick={() => onOpenCheckout("Pro", 29)}>Upgrade Now</button>
+            <p>{t.nav.upgrade}</p>
+            <span>{t.nav.upgradeDesc}</span>
+            <button onClick={() => onOpenCheckout("Pro", 29)}>{t.nav.upgrade}</button>
           </div>
-          <button className="logout-btn" onClick={onLogout}><LogOut size={16} /> Sign out</button>
+          <button className="logout-btn" onClick={onLogout}><LogOut size={16} /> {t.nav.logout}</button>
         </div>
       </aside>
 
@@ -184,28 +170,28 @@ export default function AppView({
       <main className="eduplex-main">
         <header className="eduplex-header">
           <div className="header-greeting">
-            {/* HAMBURGER MENU BUTTON */}
             <button className="mobile-menu-btn" onClick={() => setIsSidebarOpen(true)}>
               <Menu size={24} color="#111827" />
             </button>
             <div>
               <h1>
-                {activeTab === "dashboard" && <>Welcome back, <span>{displayName}</span> 👋</>}
-                {activeTab === "new" && "New Translation"}
-                {activeTab === "documents" && "My Documents"}
-                {activeTab === "billing" && "Billing & Plans"}
-                {activeTab === "settings" && "Account Settings"}
+                {activeTab === "dashboard" && <>{t.dash.welcome}, <span>{displayName}</span> 👋</>}
+                {activeTab === "new" && t.dash.newTransTitle}
+                {activeTab === "documents" && t.dash.docsTitle}
+                {activeTab === "billing" && t.dash.billingTitle}
+                {activeTab === "settings" && t.dash.settingsTitle}
               </h1>
               <p>
-                {activeTab === "dashboard" && "Here is your translation overview for today."}
-                {activeTab === "new" && "Upload your document and select the languages."}
-                {activeTab === "billing" && "Manage your subscription and billing details."}
-                {activeTab === "settings" && "Manage your account preferences."}
-                {activeTab === "documents" && "View and manage your translated files."}
+                {activeTab === "dashboard" && t.dash.subtitle}
+                {activeTab === "new" && t.dash.newTransSub}
+                {activeTab === "billing" && t.dash.billingSub}
+                {activeTab === "settings" && t.dash.settingsSub}
+                {activeTab === "documents" && t.dash.docsSub}
               </p>
             </div>
           </div>
           <div className="header-actions">
+            <LanguageSwitcher locale={locale} setLocale={setLocale} />
             <div className="search-bar"><Search size={16} /><input type="text" placeholder="Search..." /></div>
             <button className="icon-btn"><Bell size={18} /></button>
             <div className="header-avatar">{email ? email[0].toUpperCase() : "U"}</div>
@@ -214,28 +200,28 @@ export default function AppView({
 
         <div className="dashboard-grid">
           
-          {/* DASHBOARD VIEW */}
+          {/* DASHBOARD */}
           {activeTab === "dashboard" && (
             <>
               <div className="grid-main">
                 <div className="quick-actions-row">
                   <div className="action-card" onClick={() => setActiveTab("new")}>
                     <div className="action-icon bg-purple"><UploadCloud size={20} /></div>
-                    <div className="action-info"><h4>New Upload</h4><p>Translate a file</p></div>
+                    <div className="action-info"><h4>{t.dash.newUpload}</h4><p>{t.dash.translateFile}</p></div>
                   </div>
                   <div className="action-card">
                     <div className="action-icon bg-green"><FileText size={20} /></div>
-                    <div className="action-info"><h4>Recent Files</h4><p>{translationsUsed} translated</p></div>
+                    <div className="action-info"><h4>{t.dash.recentFiles}</h4><p>{translationsUsed} {t.dash.translated}</p></div>
                   </div>
                   <div className="action-card">
                     <div className="action-icon bg-orange"><Globe size={20} /></div>
-                    <div className="action-info"><h4>Languages</h4><p>22 available</p></div>
+                    <div className="action-info"><h4>{t.dash.languages}</h4><p>22 {t.dash.available}</p></div>
                   </div>
                 </div>
                 <div className="chart-card">
                   <div className="card-header">
-                    <h3>Translation Activity</h3>
-                    <select className="chart-select"><option>This Week</option></select>
+                    <h3>{t.dash.activity}</h3>
+                    <select className="chart-select"><option>{t.dash.thisWeek}</option></select>
                   </div>
                   <div className="chart-container">
                     <div className="mock-chart">
@@ -253,21 +239,19 @@ export default function AppView({
                 <div className="side-card plan-card">
                   <div className="plan-header">
                     <div className="plan-badge-icon">D</div>
-                    <div><h4>DocTrans {plan ? plan.name : "Free"}</h4><p>Current Plan</p></div>
+                    <div><h4>DocTrans {plan ? plan.name : "Free"}</h4><p>{t.dash.currentPlan}</p></div>
                   </div>
                   <p className="plan-desc">
-                    {plan && plan.name !== "Free" 
-                      ? "Unlimited translations remaining." 
-                      : `You have ${Math.max(0, MAX_FREE_TRANSLATIONS - translationsUsed)} of ${MAX_FREE_TRANSLATIONS} free translations left.`}
+                    {plan && plan.name !== "Free" ? "Unlimited" : `${Math.max(0, MAX_FREE_TRANSLATIONS - translationsUsed)} / ${MAX_FREE_TRANSLATIONS}`} {t.dash.remaining}
                   </p>
-                  <button className="btn-lime" onClick={() => onOpenCheckout("Pro", 29)}>Upgrade Plan <ArrowUpRight size={16} /></button>
+                  <button className="btn-lime" onClick={() => onOpenCheckout("Pro", 29)}>{t.dash.upgradePlan} <ArrowUpRight size={16} /></button>
                 </div>
                 <div className="side-card">
-                  <div className="card-header"><h3>Recent Activity</h3></div>
+                  <div className="card-header"><h3>{t.dash.recentAct}</h3></div>
                   <div className="activity-feed">
                     <div className="feed-item">
                       <div className="feed-dot bg-green"></div>
-                      <div className="feed-text"><h4>Document Translated</h4><p>Q3_Financials.pdf ➔ ES</p><span>2 hours ago</span></div>
+                      <div className="feed-text"><h4>{t.dash.docTranslated}</h4><p>Q3_Financials.pdf ➔ ES</p><span>2 hours ago</span></div>
                     </div>
                   </div>
                 </div>
@@ -275,7 +259,7 @@ export default function AppView({
             </>
           )}
 
-          {/* NEW TRANSLATION VIEW */}
+          {/* NEW TRANSLATION */}
           {activeTab === "new" && (
             <div className="translation-workspace">
               <div className="translation-card">
@@ -284,37 +268,30 @@ export default function AppView({
                     <div className="success-icon-wrapper" style={{ background: '#fee2e2' }}>
                       <Award size={40} style={{ color: '#ef4444' }} />
                     </div>
-                    <h3>Free Limit Reached</h3>
-                    <p>You have used your {MAX_FREE_TRANSLATIONS} free translations.</p>
-                    <p>Upgrade to Pro to unlock unlimited translations and preserve your layout.</p>
-                    <button className="btn-primary w-full mt-4" onClick={() => onOpenCheckout("Pro", 29)}>
-                      Upgrade to Pro Now
-                    </button>
+                    <h3>{t.dash.freeLimit}</h3>
+                    <p>{t.dash.freeLimitSub}</p>
+                    <button className="btn-primary w-full mt-4" onClick={() => onOpenCheckout("Pro", 29)}>{t.dash.upgradeNow}</button>
                   </div>
                 ) : translatedDoc ? (
                   <div className="translation-success-state">
                     <div className="success-icon-wrapper"><Check size={40} className="success-icon" /></div>
-                    <h3>Translation Complete!</h3>
-                    <p>Your document is ready to download.</p>
+                    <h3>{t.dash.success}</h3>
+                    <p>{t.dash.successSub}</p>
                     <a href={translatedDoc.url} download className="btn-download" target="_blank" rel="noreferrer">
-                      <Download size={20} /> Download {translatedDoc.name}
+                      <Download size={20} /> {t.dash.download} {translatedDoc.name}
                     </a>
-                    <button className="btn-outline-sm mt-4" onClick={resetTranslation}>Translate another document</button>
+                    <button className="btn-outline-sm mt-4" onClick={() => { setSelectedFile(null); setTranslatedDoc(null); }}>{t.dash.translateAnother}</button>
                   </div>
                 ) : (
                   <>
-                    <div 
-                      className={`beautiful-dropzone ${isDragging ? "dragging" : ""} ${selectedFile ? "has-file" : ""}`}
-                      onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
-                      onClick={() => fileInputRef.current.click()}
-                    >
+                    <div className={`beautiful-dropzone ${isDragging ? "dragging" : ""} ${selectedFile ? "has-file" : ""}`} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} onClick={() => fileInputRef.current.click()}>
                       <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden-file-input" accept=".pdf,.doc,.docx,.ppt,.pptx" />
                       {!selectedFile ? (
                         <>
                           <div className="dropzone-icon-wrapper"><UploadCloud size={32} className="dropzone-icon" /></div>
-                          <h3>Drag & drop your document here</h3>
-                          <p>or <span className="browse-text">browse your files</span></p>
-                          <p className="hint">Word, PDF, PowerPoint — up to 50 MB</p>
+                          <h3>{t.dash.dragDrop}</h3>
+                          <p>{t.dash.or} <span className="browse-text">{t.dash.browse}</span></p>
+                          <p className="hint">{t.dash.hint}</p>
                         </>
                       ) : (
                         <div className="selected-file-display">
@@ -330,17 +307,17 @@ export default function AppView({
 
                     <div className="language-section">
                       <div className="lang-group">
-                        <label>From</label>
+                        <label>{t.dash.from}</label>
                         <div className="custom-select-wrapper">
                           <Globe size={16} className="select-icon" />
                           <select value={sourceLang} onChange={(e) => setSourceLang(e.target.value)}>
-                            <option>Auto-Detect</option><option>English (EN)</option><option>French (FR)</option><option>Spanish (ES)</option>
+                            <option>{t.dash.auto}</option><option>English (EN)</option><option>French (FR)</option><option>Spanish (ES)</option>
                           </select>
                         </div>
                       </div>
                       <button className="swap-btn" onClick={handleSwap} title="Swap"><ArrowRightLeft size={18} /></button>
                       <div className="lang-group">
-                        <label>To</label>
+                        <label>{t.dash.to}</label>
                         <div className="custom-select-wrapper">
                           <Globe size={16} className="select-icon" />
                           <select value={targetLang} onChange={(e) => setTargetLang(e.target.value)}>
@@ -351,7 +328,7 @@ export default function AppView({
                     </div>
 
                     <button className="btn-translate" disabled={!selectedFile || translating} onClick={handleTranslate}>
-                      {translating ? "Translating..." : "Translate Document"}
+                      {translating ? "Translating..." : t.dash.translateBtn}
                       {!translating && <ArrowRightLeft size={18} style={{ transform: 'rotate(90deg)' }} />}
                     </button>
                   </>
@@ -360,22 +337,22 @@ export default function AppView({
             </div>
           )}
 
-          {/* DOCUMENTS VIEW */}
+          {/* DOCUMENTS */}
           {activeTab === "documents" && (
             <div className="documents-table-card">
               <table className="doc-table">
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Language</th>
-                    <th className="hide-mobile">Date</th>
-                    <th>Status</th>
-                    <th>Action</th>
+                    <th>{t.dash.name}</th>
+                    <th>{t.dash.lang}</th>
+                    <th className="hide-mobile">{t.dash.date}</th>
+                    <th>{t.dash.status}</th>
+                    <th>{t.dash.action}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {documents.length === 0 ? (
-                    <tr><td colSpan="5" className="text-center py-8 text-muted">No documents translated yet.</td></tr>
+                    <tr><td colSpan="5" className="text-center py-8 text-muted">{t.dash.noDocs}</td></tr>
                   ) : (
                     documents.map((doc) => (
                       <tr key={doc.id}>
@@ -385,7 +362,7 @@ export default function AppView({
                         <td><span className="status-badge success">{doc.status}</span></td>
                         <td>
                           <button className="btn-view-doc" onClick={() => setSelectedDoc(doc)}>
-                            <Eye size={16} /> <span className="hide-mobile">View</span>
+                            <Eye size={16} /> <span className="hide-mobile">{t.dash.view}</span>
                           </button>
                         </td>
                       </tr>
@@ -396,139 +373,99 @@ export default function AppView({
             </div>
           )}
 
-          {/* BILLING VIEW */}
+          {/* BILLING */}
           {activeTab === "billing" && (
             <div className="billing-container">
               <div className="billing-top-row">
                 <div className="current-plan-card">
                   <div className="plan-header-row">
-                    <div className="plan-title"><h3>Current Plan</h3><span className={`plan-pill ${plan ? 'pro' : 'free'}`}>{plan ? plan.name : "Free Plan"}</span></div>
+                    <div className="plan-title"><h3>{t.dash.currentPlanTitle}</h3><span className={`plan-pill ${plan ? 'pro' : 'free'}`}>{plan ? plan.name : "Free"}</span></div>
                     <CreditCard className="plan-icon-large" />
                   </div>
                   <div className="usage-section">
-                    <div className="usage-text"><span>Translations used</span><strong>{plan ? "Unlimited" : `${translationsUsed} / ${MAX_FREE_TRANSLATIONS}`}</strong></div>
+                    <div className="usage-text"><span>{t.dash.pagesUsed}</span><strong>{plan ? "Unlimited" : `${translationsUsed} / ${MAX_FREE_TRANSLATIONS}`}</strong></div>
                     <div className="usage-bar-bg"><div className="usage-bar-fill" style={{ width: plan ? "10%" : `${(translationsUsed / MAX_FREE_TRANSLATIONS) * 100}%` }}></div></div>
                   </div>
                   <div className="billing-info-row">
-                    <div className="info-item"><span className="info-label">Next Billing Date</span><span className="info-value">{plan ? "Nov 22, 2026" : "N/A"}</span></div>
-                    <div className="info-item"><span className="info-label">Amount</span><span className="info-value">{plan ? `${plan.price}€ / mo` : "0€"}</span></div>
+                    <div className="info-item"><span className="info-label">{t.dash.nextDate}</span><span className="info-value">{plan ? "Nov 22, 2026" : "N/A"}</span></div>
+                    <div className="info-item"><span className="info-label">{t.dash.amount}</span><span className="info-value">{plan ? `${plan.price}€ / mo` : "0€"}</span></div>
                   </div>
                 </div>
                 <div className="payment-method-card">
-                  <h3>Payment Method</h3>
+                  <h3>{t.dash.paymentMethod}</h3>
                   <div className="empty-payment">
                     <div className="card-icon-mock"></div>
-                    <p>No payment method added yet.</p>
-                    <button className="btn-outline-sm">Add Card</button>
+                    <p>{t.dash.noPayment}</p>
+                    <button className="btn-outline-sm">{t.dash.addCard}</button>
                   </div>
                 </div>
               </div>
 
               <div className="upgrade-section">
-                <div className="upgrade-header"><h3>Available Plans</h3><p>Choose the plan that fits your translation needs.</p></div>
+                <div className="upgrade-header"><h3>{t.dash.availablePlans}</h3><p>{t.dash.choosePlan}</p></div>
                 <div className="upgrade-cards-grid">
                   <div className="upgrade-card">
-                    <div className="card-top"><h4>Ponctuel</h4><p className="upgrade-desc">For occasional users.</p><div className="upgrade-price">0€<span>/mo</span></div></div>
+                    <div className="card-top"><h4>Ponctuel</h4><div className="upgrade-price">0€<span>{t.dash.mo}</span></div></div>
                     <ul className="upgrade-features">
                       <li><Check size={18} className="check-icon" /> 2 free translations</li>
                       <li><Check size={18} className="check-icon" /> Standard translation</li>
                     </ul>
-                    <button className="btn-outline w-full" disabled>Current Plan</button>
+                    <button className="btn-outline w-full" disabled>{t.dash.currentPlanTitle}</button>
                   </div>
                   <div className="upgrade-card popular">
                     <div className="popular-tag">MOST POPULAR</div>
-                    <div className="card-top"><h4>Pro</h4><p className="upgrade-desc">For professionals.</p><div className="upgrade-price">29€<span>/mo</span></div></div>
+                    <div className="card-top"><h4>Pro</h4><div className="upgrade-price">29€<span>{t.dash.mo}</span></div></div>
                     <ul className="upgrade-features">
                       <li><Check size={18} className="check-icon" /> Unlimited pages</li>
                       <li><Check size={18} className="check-icon" /> Layout preservation</li>
                       <li><Check size={18} className="check-icon" /> Priority support</li>
                     </ul>
-                    <button className="btn-primary w-full" onClick={() => onOpenCheckout("Pro", 29)}>Upgrade to Pro</button>
+                    <button className="btn-primary w-full" onClick={() => onOpenCheckout("Pro", 29)}>Upgrade</button>
                   </div>
                   <div className="upgrade-card">
-                    <div className="card-top"><h4>Équipe</h4><p className="upgrade-desc">For teams and agencies.</p><div className="upgrade-price">79€<span>/mo</span></div></div>
+                    <div className="card-top"><h4>Équipe</h4><div className="upgrade-price">79€<span>{t.dash.mo}</span></div></div>
                     <ul className="upgrade-features">
                       <li><Check size={18} className="check-icon" /> Everything in Pro</li>
                       <li><Check size={18} className="check-icon" /> 5 team members</li>
                       <li><Check size={18} className="check-icon" /> Admin dashboard</li>
                     </ul>
-                    <button className="btn-outline w-full" onClick={() => onOpenCheckout("Équipe", 79)}>Upgrade to Équipe</button>
+                    <button className="btn-outline w-full" onClick={() => onOpenCheckout("Équipe", 79)}>Upgrade</button>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* SETTINGS VIEW */}
+          {/* SETTINGS */}
           {activeTab === "settings" && (
             <div className="settings-container">
               <div className="settings-card">
                 <div className="settings-card-header">
-                  <div className="settings-icon-wrapper bg-blue"><Sliders size={20} /></div>
-                  <div className="settings-header-text">
-                    <h3>Translation Preferences</h3>
-                    <p>Customize how DocTrans handles your documents.</p>
-                  </div>
-                </div>
-                <div className="settings-card-body">
-                  <div className="row-group">
-                    <div className="row-text">
-                      <label>Default Target Language</label>
-                      <p>The language your documents translate to by default.</p>
-                    </div>
-                    <select className="settings-select" value={defaultLang} onChange={(e) => setDefaultLang(e.target.value)}>
-                      <option>French (FR)</option><option>English (EN)</option><option>Spanish (ES)</option>
-                    </select>
-                  </div>
-                  <div className="row-group">
-                    <div className="row-text">
-                      <label>Preserve Layout by Default</label>
-                      <p>Keep tables, fonts, and images intact automatically.</p>
-                    </div>
-                    <label className="toggle-switch">
-                      <input type="checkbox" checked={preserveLayout} onChange={(e) => setPreserveLayout(e.target.checked)} />
-                      <span className="slider"></span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <div className="settings-card">
-                <div className="settings-card-header">
-                  <div className="settings-icon-wrapper bg-green"><Bell size={20} /></div>
-                  <div className="settings-header-text">
-                    <h3>Email Notifications</h3>
-                    <p>Choose what updates you want to receive.</p>
-                  </div>
-                </div>
-                <div className="settings-card-body">
-                  <div className="row-group">
-                    <div className="row-text">
-                      <label>Translation Completed</label>
-                      <p>Get an email when your document is ready to download.</p>
-                    </div>
-                    <label className="toggle-switch">
-                      <input type="checkbox" checked={emailNotifs} onChange={(e) => setEmailNotifs(e.target.checked)} />
-                      <span className="slider"></span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <div className="settings-card">
-                <div className="settings-card-header">
                   <div className="settings-icon-wrapper bg-purple"><User size={20} /></div>
                   <div className="settings-header-text">
-                    <h3>Profile Information</h3>
-                    <p>Update your account's profile information and email address.</p>
+                    <h3>{t.dash.profile}</h3>
+                    <p>{t.dash.profileSub}</p>
                   </div>
                 </div>
                 <div className="settings-card-body">
                   <div className="form-group">
-                    <label>Email Address</label>
+                    <label>{t.dash.emailLabel}</label>
                     <input type="email" value={email || ""} disabled className="settings-input disabled" />
-                    <p className="input-hint">Your email is used for billing and login.</p>
+                    <p className="input-hint">{t.dash.emailHint}</p>
                   </div>
+                </div>
+              </div>
+
+              <div className="settings-card">
+                <div className="settings-card-header">
+                  <div className="settings-icon-wrapper bg-orange"><Shield size={20} /></div>
+                  <div className="settings-header-text">
+                    <h3>{t.dash.security}</h3>
+                    <p>{t.dash.securitySub}</p>
+                  </div>
+                </div>
+                <div className="settings-card-body">
+                  <button className="btn-outline-sm">{t.dash.changePass}</button>
                 </div>
               </div>
 
@@ -536,56 +473,41 @@ export default function AppView({
                 <div className="settings-card-header">
                   <div className="settings-icon-wrapper bg-red"><AlertTriangle size={20} /></div>
                   <div className="settings-header-text">
-                    <h3>Danger Zone</h3>
-                    <p>Permanently delete your account and all data.</p>
+                    <h3>{t.dash.danger}</h3>
+                    <p>{t.dash.dangerSub}</p>
                   </div>
                 </div>
                 <div className="settings-card-body">
-                  <button className="btn-danger">
-                    <Trash2 size={16} /> Delete Account
-                  </button>
+                  <button className="btn-danger"><Trash2 size={16} /> {t.dash.delete}</button>
                 </div>
               </div>
             </div>
           )}
-
         </div>
       </main>
 
-      {/* DOCUMENT DETAILS MODAL */}
+      {/* MODAL */}
       {selectedDoc && (
         <div className="doc-modal-overlay" onClick={() => setSelectedDoc(null)}>
           <div className="doc-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setSelectedDoc(null)}>
-              <X size={20} />
-            </button>
-            
+            <button className="modal-close" onClick={() => setSelectedDoc(null)}><X size={20} /></button>
             <div className="modal-header">
               <div className="file-icon-box"><FileText size={32} /></div>
               <h3>{selectedDoc.name}</h3>
               <span className="status-badge success">{selectedDoc.status}</span>
             </div>
-
             <div className="modal-body">
-              <div className="detail-row">
-                <span className="detail-label">Target Language</span>
-                <span className="detail-value">{selectedDoc.lang}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Date Translated</span>
-                <span className="detail-value">{selectedDoc.date}</span>
-              </div>
+              <div className="detail-row"><span className="detail-label">{t.dash.lang}</span><span className="detail-value">{selectedDoc.lang}</span></div>
+              <div className="detail-row"><span className="detail-label">{t.dash.date}</span><span className="detail-value">{selectedDoc.date}</span></div>
             </div>
-
             <div className="modal-footer">
               <a href={selectedDoc.url} download className="btn-download w-full" target="_blank" rel="noreferrer">
-                <Download size={18} /> Download File
+                <Download size={18} /> {t.dash.download}
               </a>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }

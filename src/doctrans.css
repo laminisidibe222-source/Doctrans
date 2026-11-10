@@ -3102,3 +3102,38 @@ body, html, #root {
     display: none !important;
   }
 }
+
+/* Language Switcher Pill */
+.lang-switcher-pill {
+  display: inline-flex;
+  align-items: center;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+}
+
+.lang-btn {
+  background: transparent;
+  border: none;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #94a3b8;
+  cursor: pointer;
+  border-radius: 16px;
+  transition: all 0.2s;
+}
+
+.lang-btn.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.lang-divider {
+  color: #cbd5e1;
+  font-weight: 700;
+  font-size: 0.8rem;
+  margin: 0 2px;
+}

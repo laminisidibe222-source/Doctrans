@@ -4,6 +4,7 @@ import AppView from "./components/AppView";
 import Checkout from "./components/Checkout";
 import Login from "./components/Login";
 import Signup from "./components/Signup";
+// Removed LanguageSwitcher import from here
 import "./doctrans.css";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "https://doctrans-backend.onrender.com";
@@ -13,9 +14,13 @@ export default function DocTrans() {
   const [checkingAuth, setCheckingAuth] = useState(true); 
   const [checkout, setCheckout] = useState(null);
   const [plan, setPlan] = useState(null);
-  const [locale, setLocale] = useState("en");
+
+  const [locale, setLocale] = useState(() => {
+    const saved = localStorage.getItem("doctrans_locale");
+    if (saved) return saved;
+    return navigator.language.startsWith("fr") ? "fr" : "en"; // Auto-detect
+  });
   
-  // Initialize email from localStorage
   const [email, setEmailState] = useState(() => {
     return localStorage.getItem("doctrans_email") || "";
   });
@@ -26,13 +31,16 @@ export default function DocTrans() {
   };
 
   useEffect(() => {
-    // Simple Auth Check
     const savedEmail = localStorage.getItem("doctrans_email");
     if (savedEmail) {
       setScreen("app");
     }
     setCheckingAuth(false);
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem("doctrans_locale", locale);
+  }, [locale]);
 
   const openCheckout = (planName, price) => setCheckout({ plan: planName, price });
   
@@ -53,7 +61,8 @@ export default function DocTrans() {
           goApp={() => setScreen("app")} 
           goPricingCheckout={openCheckout}
           goLogin={() => setScreen("login")} 
-          goSignup={() => setScreen("signup")} 
+          goSignup={() => setScreen("signup")}
+          locale={locale} setLocale={setLocale} 
         />
       )}
       {screen === "login" && (
@@ -64,6 +73,7 @@ export default function DocTrans() {
           }} 
           goSignup={() => setScreen("signup")} 
           goBack={() => setScreen("landing")}
+          locale={locale} setLocale={setLocale} 
         />
       )}
       {screen === "signup" && (
@@ -74,6 +84,7 @@ export default function DocTrans() {
           }} 
           goLogin={() => setScreen("login")} 
           goBack={() => setScreen("landing")}
+          locale={locale} setLocale={setLocale} 
         />
       )}
       {screen === "app" && (
@@ -87,6 +98,7 @@ export default function DocTrans() {
         <Checkout
           plan={checkout.plan} price={checkout.price} email={email}
           onEmailCaptured={setEmail} onClose={() => setCheckout(null)}
+          locale={locale} setLocale={setLocale}
         />
       )}
     </div>
