@@ -3137,3 +3137,12 @@ body, html, #root {
   font-size: 0.8rem;
   margin: 0 2px;
 }
+
+@media (max-width: 768px) {
+  .landing-nav-links {
+    display: none !important; /* Hide text links on mobile to save space */
+  }
+  .landing-auth-buttons {
+    gap: 0.5rem !important;
+  }
+}

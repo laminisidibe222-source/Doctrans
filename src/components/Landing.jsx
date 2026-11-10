@@ -1,386 +1,271 @@
 import React from "react";
 import { 
   ArrowRight, ShieldCheck, Zap, Layout, Lock, CheckCircle2, 
-  Globe, Users, Sparkles, ChevronDown, FileText, Upload, 
-  Download, Play, Clock, Layers, Eye, Database , X
+  Globe, Users, Sparkles, FileText, Upload, Download, Play, Clock, Layers, Eye, Database
 } from "lucide-react";
-import "../doctrans.css"; // Ensure the path to your CSS is correct
+import LanguageSwitcher from "./LanguageSwitcher";
+import { translations } from "../i18n";
+import "../doctrans.css";
 
-export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup }) {
+export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup, locale, setLocale }) {
+  // Load translations
+  const t = translations[locale] || translations["en"];
+
   return (
     <div className="landing-page">
       
-      {/* =========================================
-          STICKY NAVBAR
-      ========================================= */}
+      {/* NAVBAR */}
       <nav className="landing-navbar">
-        {/* Replace your old logo with this */}
-        <div className="brand-logo" onClick={goApp}>
+        <div className="brand-logo" onClick={goApp} style={{ cursor: 'pointer' }}>
           <div className="brand-icon">D</div>
           <span className="brand-name">DocTrans</span>
         </div>
+        
         <div className="landing-nav-links">
-          <a href="#features">Features</a>
-          <a href="#how-it-works">How it works</a>
-          <a href="#pricing">Pricing</a>
-          <a href="#faq">FAQ</a>
+          <a href="#features">{t.landing.navFeatures}</a>
+          <a href="#how-it-works">{t.landing.navHowItWorks}</a>
+          <a href="#pricing">{t.landing.navPricing}</a>
+          <a href="#faq">{t.landing.navFaq}</a>
         </div>
+        
         <div className="landing-auth-buttons">
-          <button onClick={goLogin} className="btn-outline">Log in</button>
-          <button onClick={goSignup} className="btn-primary">Sign Up</button>
+          <LanguageSwitcher locale={locale} setLocale={setLocale} />
+          <button onClick={goLogin} className="btn-outline" style={{ marginLeft: '1rem' }}>{t.landing.login}</button>
+          <button onClick={goSignup} className="btn-primary">{t.landing.signup}</button>
         </div>
       </nav>
 
-      {/* =========================================
-          HERO SECTION
-      ========================================= */}
+      {/* HERO */}
       <header className="landing-hero">
         <div className="hero-text">
           <div className="hero-badge">
-            <Sparkles size={14} /> Now in Early Access
+            <Sparkles size={14} /> {t.landing.earlyAccess}
           </div>
-          <h1>Translate documents without breaking the layout.</h1>
-          <p>
-            DocTrans is the privacy-first translation engine built for professionals. 
-            Keep your tables, fonts, and images intact while translating into 22+ languages.
-          </p>
+          <h1>{t.landing.heroTitle}</h1>
+          <p>{t.landing.heroSubtitle}</p>
           <div className="hero-actions">
             <button onClick={goSignup} className="btn-primary btn-large">
-              Get Started for Free <ArrowRight size={18} />
+              {t.landing.getStartedFree} <ArrowRight size={18} />
             </button>
             <button onClick={goApp} className="btn-outline btn-large">
-              <Play size={18} /> Try the App
+              <Play size={18} /> {t.landing.tryApp}
             </button>
           </div>
-          <p className="hero-subtext">No credit card required. Free tier available.</p>
+          <p className="hero-subtext">{t.landing.noCard}</p>
         </div>
         
         <div className="hero-visual">
           <div className="visual-card">
             <div className="visual-header">
-              <span className="dot red"></span>
-              <span className="dot yellow"></span>
-              <span className="dot green"></span>
+              <span className="dot red"></span><span className="dot yellow"></span><span className="dot green"></span>
             </div>
             <div className="visual-body">
               <div className="visual-line long"></div>
               <div className="visual-line short"></div>
               <div className="visual-line medium"></div>
               <div className="visual-stat">
-                <span>Layout</span> Preserved
+                <span>{locale === 'fr' ? 'Mise en page' : 'Layout'}</span> {locale === 'fr' ? 'Préservée' : 'Preserved'}
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* =========================================
-          SOCIAL PROOF / INTEGRATIONS BAR
-      ========================================= */}
+      {/* SOCIAL PROOF */}
       <section className="landing-proof">
-        <p className="proof-title">Works with your existing tools</p>
+        <p className="proof-title">{t.landing.socialProofTitle}</p>
         <div className="proof-logos">
-          <span>Google Drive</span>
-          <span>Dropbox</span>
-          <span>OneDrive</span>
-          <span>Notion</span>
-          <span>Slack</span>
+          <span>Google Drive</span><span>Dropbox</span><span>OneDrive</span><span>Notion</span><span>Slack</span>
         </div>
       </section>
 
-      {/* =========================================
-          PROBLEM / SOLUTION SECTION
-      ========================================= */}
+      {/* PROBLEM / SOLUTION */}
       <section className="landing-problem">
         <div className="problem-grid">
           <div className="problem-card problem">
-            <h3>The Problem</h3>
-            <p>Traditional translation tools destroy your formatting. You spend hours re-building tables, fixing fonts, and re-inserting images.</p>
+            <h3>{t.landing.problemTitle}</h3>
+            <p>{t.landing.problemDesc}</p>
           </div>
           <div className="problem-card solution">
-            <h3>The Solution</h3>
-            <p>DocTrans uses a layout-aware engine. We translate the text but preserve the structure, so your document looks exactly the same in any language.</p>
+            <h3>{t.landing.solutionTitle}</h3>
+            <p>{t.landing.solutionDesc}</p>
           </div>
         </div>
       </section>
 
-      {/* =========================================
-          FEATURE DEEP DIVE
-      ========================================= */}
+      {/* FEATURES */}
       <section id="features" className="landing-features">
         <div className="section-header">
-          <h2>Everything you need to translate with confidence</h2>
-          <p>Built for accuracy, speed, and security.</p>
+          <h2>{t.landing.featuresTitle}</h2>
+          <p>{t.landing.featuresSub}</p>
         </div>
         
         <div className="features-grid">
-          <div className="feature-card">
-            <Layout className="feature-icon" />
-            <h3>Format Preservation</h3>
-            <p>Tables, columns, headers, and footers remain exactly where they should be.</p>
-          </div>
-          <div className="feature-card">
-            <ShieldCheck className="feature-icon" />
-            <h3>Privacy First</h3>
-            <p>Your documents are encrypted and never used to train public models. Your data stays yours.</p>
-          </div>
-          <div className="feature-card">
-            <Zap className="feature-icon" />
-            <h3>Fast Processing</h3>
-            <p>Translate hundreds of pages in minutes with our optimized batch engine.</p>
-          </div>
-          <div className="feature-card">
-            <Globe className="feature-icon" />
-            <h3>22+ Languages</h3>
-            <p>Support for all major European and Asian languages, with more added monthly.</p>
-          </div>
-          <div className="feature-card">
-            <FileText className="feature-icon" />
-            <h3>Multiple Formats</h3>
-            <p>Upload PDF, DOCX, PPTX, and XLSX files. We handle the rest.</p>
-          </div>
-          <div className="feature-card">
-            <Users className="feature-icon" />
-            <h3>Team Collaboration</h3>
-            <p>Share projects, assign reviews, and manage glossaries with your team.</p>
-          </div>
+          <div className="feature-card"><Layout className="feature-icon" /><h3>{t.landing.featFormatTitle}</h3><p>{t.landing.featFormatDesc}</p></div>
+          <div className="feature-card"><ShieldCheck className="feature-icon" /><h3>{t.landing.featPrivacyTitle}</h3><p>{t.landing.featPrivacyDesc}</p></div>
+          <div className="feature-card"><Zap className="feature-icon" /><h3>{t.landing.featSpeedTitle}</h3><p>{t.landing.featSpeedDesc}</p></div>
+          <div className="feature-card"><Globe className="feature-icon" /><h3>{t.landing.featLangTitle}</h3><p>{t.landing.featLangDesc}</p></div>
+          <div className="feature-card"><FileText className="feature-icon" /><h3>{t.landing.featFormatTypeTitle}</h3><p>{t.landing.featFormatTypeDesc}</p></div>
+          <div className="feature-card"><Users className="feature-icon" /><h3>{t.landing.featTeamTitle}</h3><p>{t.landing.featTeamDesc}</p></div>
         </div>
       </section>
 
-      {/* =========================================
-          HOW IT WORKS (TIMELINE)
-      ========================================= */}
+      {/* HOW IT WORKS */}
       <section id="how-it-works" className="landing-steps">
         <div className="section-header">
-          <h2>How it works</h2>
-          <p>Three simple steps to a perfectly formatted translation.</p>
+          <h2>{t.landing.howTitle}</h2>
+          <p>{t.landing.howSub}</p>
         </div>
-        
         <div className="steps-container">
-          <div className="step">
-            <div className="step-icon-wrapper">
-              <Upload className="step-icon" />
-            </div>
-            <h4>1. Upload</h4>
-            <p>Drag and drop your document securely into the dashboard.</p>
-          </div>
+          <div className="step"><div className="step-icon-wrapper"><Upload className="step-icon" /></div><h4>{t.landing.step1Title}</h4><p>{t.landing.step1Desc}</p></div>
           <div className="step-connector"></div>
-          <div className="step">
-            <div className="step-icon-wrapper">
-              <Layers className="step-icon" />
-            </div>
-            <h4>2. Translate</h4>
-            <p>Our engine processes the text while keeping the design intact.</p>
-          </div>
+          <div className="step"><div className="step-icon-wrapper"><Layers className="step-icon" /></div><h4>{t.landing.step2Title}</h4><p>{t.landing.step2Desc}</p></div>
           <div className="step-connector"></div>
-          <div className="step">
-            <div className="step-icon-wrapper">
-              <Download className="step-icon" />
-            </div>
-            <h4>3. Download</h4>
-            <p>Get your translated document, ready to use immediately.</p>
-          </div>
+          <div className="step"><div className="step-icon-wrapper"><Download className="step-icon" /></div><h4>{t.landing.step3Title}</h4><p>{t.landing.step3Desc}</p></div>
         </div>
       </section>
 
-      {/* =========================================
-          TRUST & SECURITY SECTION
-      ========================================= */}
+      {/* TRUST */}
       <section className="landing-trust">
         <div className="trust-content">
-          <h2>Your documents are safe with us.</h2>
-          <p>We take security seriously. DocTrans is built with privacy at its core.</p>
+          <h2>{t.landing.trustTitle}</h2>
+          <p>{t.landing.trustSub}</p>
           <div className="trust-badges">
-            <div className="badge">
-              <Lock className="badge-icon" />
-              <span>End-to-End Encryption</span>
-            </div>
-            <div className="badge">
-              <Eye className="badge-icon" />
-              <span>No Data Training</span>
-            </div>
-            <div className="badge">
-              <Database className="badge-icon" />
-              <span>Secure Cloud Storage</span>
-            </div>
-            <div className="badge">
-              <Clock className="badge-icon" />
-              <span>Auto-Delete Option</span>
-            </div>
+            <div className="badge"><Lock className="badge-icon" /><span>{t.landing.trustBadge1}</span></div>
+            <div className="badge"><Eye className="badge-icon" /><span>{t.landing.trustBadge2}</span></div>
+            <div className="badge"><Database className="badge-icon" /><span>{t.landing.trustBadge3}</span></div>
+            <div className="badge"><Clock className="badge-icon" /><span>{t.landing.trustBadge4}</span></div>
           </div>
         </div>
       </section>
 
-      {/* =========================================
-          COMPARISON TABLE
-      ========================================= */}
+      {/* COMPARISON */}
       <section className="landing-comparison">
         <div className="section-header">
-          <h2>Why DocTrans is different</h2>
-          <p>See how we compare to traditional translation tools.</p>
+          <h2>{t.landing.compTitle}</h2>
+          <p>{t.landing.compSub}</p>
         </div>
         <div className="comparison-table-wrapper">
           <table className="comparison-table">
             <thead>
-              <tr>
-                <th>Feature</th>
-                <th>DocTrans</th>
-                <th>Traditional Tools</th>
-              </tr>
+              <tr><th>{t.landing.compFeature}</th><th>{t.landing.compDocTrans}</th><th>{t.landing.compTraditional}</th></tr>
             </thead>
             <tbody>
-              <tr>
-                <td>Format Preservation</td>
-                <td><CheckCircle2 className="text-green" size={20} /></td>
-                <td><span className="text-red">✕</span></td>
-              </tr>
-              <tr>
-                <td>Privacy First (No Training)</td>
-                <td><CheckCircle2 className="text-green" size={20} /></td>
-                <td><span className="text-red">✕</span></td>
-              </tr>
-              <tr>
-                <td>Batch Processing</td>
-                <td><CheckCircle2 className="text-green" size={20} /></td>
-                <td><span className="text-red">✕</span></td>
-              </tr>
-              <tr>
-                <td>Team Collaboration</td>
-                <td><CheckCircle2 className="text-green" size={20} /></td>
-                <td><span className="text-red">✕</span></td>
-              </tr>
+              <tr><td>{t.landing.compRow1}</td><td><CheckCircle2 className="text-green" size={20} /></td><td><span className="text-red">✕</span></td></tr>
+              <tr><td>{t.landing.compRow2}</td><td><CheckCircle2 className="text-green" size={20} /></td><td><span className="text-red">✕</span></td></tr>
+              <tr><td>{t.landing.compRow3}</td><td><CheckCircle2 className="text-green" size={20} /></td><td><span className="text-red">✕</span></td></tr>
+              <tr><td>{t.landing.compRow4}</td><td><CheckCircle2 className="text-green" size={20} /></td><td><span className="text-red">✕</span></td></tr>
             </tbody>
           </table>
         </div>
       </section>
 
-      {/* =========================================
-          PRICING PREVIEW
-      ========================================= */}
+      {/* PRICING */}
       <section id="pricing" className="landing-pricing">
         <div className="section-header">
-          <h2>Simple, honest pricing</h2>
-          <p>Start for free. Upgrade when you need more.</p>
+          <h2>{t.landing.priceTitle}</h2>
+          <p>{t.landing.priceSub}</p>
         </div>
         <div className="pricing-cards">
           <div className="pricing-card">
-            <h3>Ponctuel</h3>
-            <div className="price">0€<span>/mo</span></div>
-            <p className="pricing-desc">For occasional use.</p>
+            <h3>{t.landing.pricePlan1}</h3>
+            <div className="price">0€<span>/{locale === 'fr' ? 'mois' : 'mo'}</span></div>
+            <p className="pricing-desc">{t.landing.pricePlan1Desc}</p>
             <ul>
-              <li><CheckCircle2 size={16} /> 5 pages / month</li>
-              <li><CheckCircle2 size={16} /> Basic translation</li>
+              <li><CheckCircle2 size={16} /> {t.landing.pricePlan1Feat1}</li>
+              <li><CheckCircle2 size={16} /> {t.landing.pricePlan1Feat2}</li>
             </ul>
-            <button onClick={goApp} className="btn-outline w-full">Get Started</button>
+            <button onClick={goApp} className="btn-outline w-full">{t.landing.priceGetStarted}</button>
           </div>
           <div className="pricing-card popular">
-            <div className="popular-badge">Most Popular</div>
-            <h3>Pro</h3>
-            <div className="price">29€<span>/mo</span></div>
-            <p className="pricing-desc">For professionals.</p>
+            <div className="popular-badge">{t.landing.popular}</div>
+            <h3>{t.landing.pricePlan2}</h3>
+            <div className="price">29€<span>/{locale === 'fr' ? 'mois' : 'mo'}</span></div>
+            <p className="pricing-desc">{t.landing.pricePlan2Desc}</p>
             <ul>
-              <li><CheckCircle2 size={16} /> Unlimited pages</li>
-              <li><CheckCircle2 size={16} /> Format preservation</li>
-              <li><CheckCircle2 size={16} /> Priority support</li>
+              <li><CheckCircle2 size={16} /> {t.landing.pricePlan2Feat1}</li>
+              <li><CheckCircle2 size={16} /> {t.landing.pricePlan2Feat2}</li>
+              <li><CheckCircle2 size={16} /> {t.landing.pricePlan2Feat3}</li>
             </ul>
-            <button onClick={() => goPricingCheckout("Pro", 29)} className="btn-primary w-full">Upgrade to Pro</button>
+            <button onClick={() => goPricingCheckout("Pro", 29)} className="btn-primary w-full">
+              {t.landing.priceUpgradeTo} {t.landing.pricePlan2}
+            </button>
           </div>
           <div className="pricing-card">
-            <h3>Équipe</h3>
-            <div className="price">79€<span>/mo</span></div>
-            <p className="pricing-desc">For teams.</p>
+            <h3>{t.landing.pricePlan3}</h3>
+            <div className="price">79€<span>/{locale === 'fr' ? 'mois' : 'mo'}</span></div>
+            <p className="pricing-desc">{t.landing.pricePlan3Desc}</p>
             <ul>
-              <li><CheckCircle2 size={16} /> Everything in Pro</li>
-              <li><CheckCircle2 size={16} /> 5 team members</li>
-              <li><CheckCircle2 size={16} /> Admin dashboard</li>
+              <li><CheckCircle2 size={16} /> {t.landing.pricePlan3Feat1}</li>
+              <li><CheckCircle2 size={16} /> {t.landing.pricePlan3Feat2}</li>
+              <li><CheckCircle2 size={16} /> {t.landing.pricePlan3Feat3}</li>
             </ul>
-            <button onClick={() => goPricingCheckout("Équipe", 79)} className="btn-outline w-full">Upgrade to Team</button>
+            <button onClick={() => goPricingCheckout("Équipe", 79)} className="btn-outline w-full">
+              {t.landing.priceUpgradeTo} {t.landing.pricePlan3}
+            </button>
           </div>
         </div>
       </section>
 
-      {/* =========================================
-          FAQ ACCORDION
-      ========================================= */}
+      {/* FAQ */}
       <section id="faq" className="landing-faq">
         <div className="section-header">
-          <h2>Frequently Asked Questions</h2>
-          <p>Everything you need to know about DocTrans.</p>
+          <h2>{t.landing.faqTitle}</h2>
+          <p>{t.landing.faqSub}</p>
         </div>
         <div className="faq-list">
-          <details className="faq-item">
-            <summary>Is my data used to train AI models?</summary>
-            <p>No. Your documents are never used for training. We are a privacy-first company, and your data is encrypted and only accessible to you.</p>
-          </details>
-          <details className="faq-item">
-            <summary>What file types do you support?</summary>
-            <p>We currently support PDF, DOCX, PPTX, and XLSX files. More formats are being added regularly.</p>
-          </details>
-          <details className="faq-item">
-            <summary>Can I cancel my subscription at any time?</summary>
-            <p>Yes. You can cancel your subscription from your dashboard at any time, no questions asked.</p>
-          </details>
-          <details className="faq-item">
-            <summary>How accurate is the translation?</summary>
-            <p>We use state-of-the-art neural machine translation models. For specialized fields, we recommend using our custom glossary feature.</p>
-          </details>
+          <details className="faq-item"><summary>{t.landing.faqQ1}</summary><p>{t.landing.faqA1}</p></details>
+          <details className="faq-item"><summary>{t.landing.faqQ2}</summary><p>{t.landing.faqA2}</p></details>
+          <details className="faq-item"><summary>{t.landing.faqQ3}</summary><p>{t.landing.faqA3}</p></details>
+          <details className="faq-item"><summary>{t.landing.faqQ4}</summary><p>{t.landing.faqA4}</p></details>
         </div>
       </section>
 
-      {/* =========================================
-          FINAL CTA BANNER
-      ========================================= */}
-            {/* =========================================
-          FINAL CTA BANNER (Redesigned)
-      ========================================= */}
+      {/* FINAL CTA */}
       <section className="landing-final-cta-wrapper">
         <div className="landing-final-cta">
-          {/* Decorative glowing background elements */}
           <div className="cta-glow cta-glow-1"></div>
           <div className="cta-glow cta-glow-2"></div>
-          
           <div className="cta-content">
-            <h2>Ready to translate without the headaches?</h2>
-            <p>Join our early access and start translating documents the right way.</p>
+            <h2>{t.landing.ctaTitle}</h2>
+            <p>{t.landing.ctaSub}</p>
             <div className="cta-actions">
               <button onClick={goSignup} className="btn-cta">
-                Start Your Free Trial <ArrowRight size={18} />
+                {t.landing.ctaBtn} <ArrowRight size={18} />
               </button>
             </div>
-            <span className="cta-subtext">No credit card required.</span>
+            <span className="cta-subtext">{t.landing.noCard}</span>
           </div>
         </div>
       </section>
 
-      {/* =========================================
-          FOOTER
-      ========================================= */}
+      {/* FOOTER */}
       <footer className="landing-footer">
         <div className="footer-grid">
           <div className="footer-brand">
             <div className="landing-logo"><span className="logo-dot">●</span> DocTrans</div>
-            <p>The privacy-first document translation engine.</p>
+            <p>{t.landing.footerDesc}</p>
           </div>
           <div className="footer-links-col">
-            <h4>Product</h4>
-            <a href="#features">Features</a>
-            <a href="#pricing">Pricing</a>
-            <a href="#how-it-works">How it works</a>
+            <h4>{t.landing.footerProduct}</h4>
+            <a href="#features">{t.landing.navFeatures}</a>
+            <a href="#pricing">{t.landing.navPricing}</a>
+            <a href="#how-it-works">{t.landing.navHowItWorks}</a>
           </div>
           <div className="footer-links-col">
-            <h4>Company</h4>
-            <a href="#faq">FAQ</a>
-            <span onClick={goLogin} style={{ cursor: 'pointer' }}>Login</span>
-            <span onClick={goSignup} style={{ cursor: 'pointer' }}>Sign Up</span>
+            <h4>{t.landing.footerCompany}</h4>
+            <a href="#faq">{t.landing.navFaq}</a>
+            <span onClick={goLogin} style={{ cursor: 'pointer' }}>{t.landing.login}</span>
+            <span onClick={goSignup} style={{ cursor: 'pointer' }}>{t.landing.signup}</span>
           </div>
           <div className="footer-links-col">
-            <h4>Legal</h4>
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
+            <h4>{t.landing.footerLegal}</h4>
+            <a href="#">{t.landing.footerPrivacy}</a>
+            <a href="#">{t.landing.footerTerms}</a>
           </div>
         </div>
         <div className="footer-bottom">
-          <p>© {new Date().getFullYear()} DocTrans. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} DocTrans. {t.landing.rights}</p>
         </div>
       </footer>
 
