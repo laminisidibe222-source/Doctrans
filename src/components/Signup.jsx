@@ -9,25 +9,38 @@ export default function Signup({ onSignupSuccess, goLogin, goBack }) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // In Login.jsx
-const handleSignup = async (e) => {
-  e.preventDefault();
-  const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/signup`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, email, password })
-  });
-  const data = await res.json();
-  if (data.token) {
-    localStorage.setItem("doctrans_token", data.token);
-    onSignupSuccess(data.email);
-  } else {
-    alert(data.error);
-  }
-};
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL.replace(/\/+$/, "");
+      
+      const response = await fetch(`${backendUrl}/api/auth/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Signup failed");
+      }
+
+      // Save the token securely
+      localStorage.setItem("doctrans_token", data.token);
+      onSignupSuccess(data.email); 
+      
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleGoogleSignup = () => {
-    alert("Google Auth will be enabled soon. Please use email for now.");
+    alert("Google Auth is coming soon. Please use email/password.");
   };
 
   return (
@@ -84,7 +97,6 @@ const handleSignup = async (e) => {
           </p>
         </div>
 
-        {/* Right Side Illustration */}
         <div className="auth-right">
           <div className="illustration-container">
             <div className="mock-node node-1"><FcGoogle /></div>

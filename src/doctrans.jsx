@@ -4,21 +4,19 @@ import AppView from "./components/AppView";
 import Checkout from "./components/Checkout";
 import Login from "./components/Login";
 import Signup from "./components/Signup";
-// Removed LanguageSwitcher import from here
 import "./doctrans.css";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "https://doctrans-backend.onrender.com";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "https://doctrans-6o6h.onrender.com";
 
 export default function DocTrans() {
   const [screen, setScreen] = useState("landing");
   const [checkingAuth, setCheckingAuth] = useState(true); 
   const [checkout, setCheckout] = useState(null);
   const [plan, setPlan] = useState(null);
-
   const [locale, setLocale] = useState(() => {
     const saved = localStorage.getItem("doctrans_locale");
     if (saved) return saved;
-    return navigator.language.startsWith("fr") ? "fr" : "en"; // Auto-detect
+    return navigator.language.startsWith("fr") ? "fr" : "en";
   });
   
   const [email, setEmailState] = useState(() => {
@@ -30,9 +28,13 @@ export default function DocTrans() {
     localStorage.setItem("doctrans_email", value);
   };
 
+  // Secure Auth Check
   useEffect(() => {
+    const savedToken = localStorage.getItem("doctrans_token");
     const savedEmail = localStorage.getItem("doctrans_email");
-    if (savedEmail) {
+    
+    // In a production app, you would also verify this token with the backend here
+    if (savedToken && savedEmail) {
       setScreen("app");
     }
     setCheckingAuth(false);
@@ -45,7 +47,9 @@ export default function DocTrans() {
   const openCheckout = (planName, price) => setCheckout({ plan: planName, price });
   
   const handleLogout = () => { 
-    setEmail("");
+    localStorage.removeItem("doctrans_token");
+    localStorage.removeItem("doctrans_email");
+    setEmailState("");
     setScreen("landing"); 
     setPlan(null); 
   };

@@ -8,25 +8,38 @@ export default function Login({ onLoginSuccess, goSignup, goBack }) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // In Login.jsx
   const handleLogin = async (e) => {
     e.preventDefault();
-    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
-    });
-    const data = await res.json();
-    if (data.token) {
+    setLoading(true);
+
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL.replace(/\/+$/, "");
+      
+      const response = await fetch(`${backendUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Invalid credentials");
+      }
+
+      // Save the token securely
       localStorage.setItem("doctrans_token", data.token);
-      onLoginSuccess(data.email);
-    } else {
-      alert(data.error);
+      onLoginSuccess(data.email); 
+      
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleGoogleLogin = () => {
-    alert("Google Auth will be enabled soon. Please use email for now.");
+    alert("Google Auth is coming soon. Please use email/password.");
   };
 
   return (
@@ -43,7 +56,7 @@ export default function Login({ onLoginSuccess, goSignup, goBack }) {
               <span className="brand-name">DocTrans</span>
             </div>
             <h2>Log in to your Account</h2>
-            <p>Welcome back! Select method to log in:</p>
+            <p>Welcome back! Enter your credentials to continue.</p>
           </div>
 
           <div className="social-buttons">
@@ -84,7 +97,6 @@ export default function Login({ onLoginSuccess, goSignup, goBack }) {
           </p>
         </div>
 
-        {/* Right Side Illustration */}
         <div className="auth-right">
           <div className="illustration-container">
             <div className="mock-node node-1"><FcGoogle /></div>
