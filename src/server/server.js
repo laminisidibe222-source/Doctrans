@@ -297,5 +297,15 @@ app.post('/api/cron/reset-limits', async (req, res) => {
   }
 });
 
+// Global Error Handler
+app.use((err, req, res, next) => {
+  console.error("🚨 GLOBAL ERROR:", {
+    message: err.message,
+    stack: err.stack,
+    path: req.path,
+    body: req.body,
+  });
+  res.status(500).json({ error: "Internal Server Error" });
+});
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}`));
