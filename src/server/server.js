@@ -57,6 +57,7 @@ const MAX_FILE_SIZE = {
 // ==========================================
 // 2. AUTHENTICATION ROUTES
 // ==========================================
+
 app.post('/api/auth/signup', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: "Email and password required." });
@@ -70,6 +71,7 @@ app.post('/api/auth/signup', async (req, res) => {
     const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, email });
   } catch (err) {
+    console.error("🚨 SIGNUP ERROR:", err); // <-- ADDED THIS
     if (err.code === '23505') res.status(400).json({ error: "An account with this email already exists." });
     else res.status(500).json({ error: "Server error during signup." });
   }
@@ -83,16 +85,21 @@ app.post('/api/auth/login', async (req, res) => {
     const { rows } = await pool.query('SELECT * FROM app_users WHERE email = $1', [email]);
     if (rows.length === 0) return res.status(401).json({ error: "Invalid email or password." });
     
+    // Safety check: If the user was created before we added passwords
+    if (!rows[0].password_hash) {
+      return res.status(400).json({ error: "This account was created before secure passwords were added. Please sign up again with a new email." });
+    }
+
     const valid = await bcrypt.compare(password, rows[0].password_hash);
     if (!valid) return res.status(401).json({ error: "Invalid email or password." });
 
     const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, email });
   } catch (err) {
+    console.error("🚨 LOGIN ERROR:", err); // <-- ADDED THIS
     res.status(500).json({ error: "Server error during login." });
   }
 });
-
 // ==========================================
 // 3. TRANSLATION ROUTE
 // ==========================================
