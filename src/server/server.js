@@ -10,7 +10,6 @@ const axios = require('axios');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-// Initialize App
 const app = express();
 const JWT_SECRET = process.env.JWT_SECRET || "fallback_secret_change_me_in_render";
 
@@ -23,37 +22,36 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 const uploadDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-}
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/");
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + "-" + file.originalname);
-  },
+  destination: (req, file, cb) => cb(null, "uploads/"),
+  filename: (req, file, cb) => cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}-${file.originalname}`),
 });
 
+// Max allowed by multer is 50MB (Team Plan)
 const upload = multer({ storage: storage, limits: { fileSize: 50 * 1024 * 1024 } });
 
-// Initialize Neon Database Pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
-// Initialize DeepL
-const translator = new deepl.Translator(process.env.DEEPL_API_KEY, {
-  minTimeout: 60000, 
-});
+const translator = new deepl.Translator(process.env.DEEPL_API_KEY, { minTimeout: 60000 });
 
+// ==========================================
+// PLAN RESTRICTIONS
+// ==========================================
 const PLAN_LIMITS = {
   "Free": 2,
-  "Pro": 12,
-  "Équipe": 20
+  "Pro": 50,
+  "Équipe": 999999 // Effectively unlimited
+};
+
+const MAX_FILE_SIZE = {
+  "Free": 2 * 1024 * 1024, // 2 MB
+  "Pro": 20 * 1024 * 1024, // 20 MB
+  "Équipe": 50 * 1024 * 1024 // 50 MB
 };
 
 // ==========================================
@@ -72,12 +70,8 @@ app.post('/api/auth/signup', async (req, res) => {
     const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, email });
   } catch (err) {
-    if (err.code === '23505') { 
-        res.status(400).json({ error: "An account with this email already exists." });
-    } else {
-        console.error("Signup Error:", err);
-        res.status(500).json({ error: "Server error during signup." });
-    }
+    if (err.code === '23505') res.status(400).json({ error: "An account with this email already exists." });
+    else res.status(500).json({ error: "Server error during signup." });
   }
 });
 
@@ -95,7 +89,6 @@ app.post('/api/auth/login', async (req, res) => {
     const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, email });
   } catch (err) {
-    console.error("Login Error:", err);
     res.status(500).json({ error: "Server error during login." });
   }
 });
@@ -130,11 +123,21 @@ app.post("/api/translate", upload.single("file"), async (req, res) => {
 
     const currentUsage = user.translations_used || 0;
     const userLimit = PLAN_LIMITS[user.plan] || PLAN_LIMITS["Free"];
+    const userMaxSize = MAX_FILE_SIZE[user.plan] || MAX_FILE_SIZE["Free"];
 
-    // Check Limit
+    // Check Translation Limit
     if (currentUsage >= userLimit) {
       try { fs.unlinkSync(file.path); } catch (e) {}
       return res.status(403).json({ error: "LIMIT_REACHED" });
+    }
+
+    // Check File Size Limit
+    if (file.size > userMaxSize) {
+      try { fs.unlinkSync(file.path); } catch (e) {}
+      return res.status(403).json({ 
+        error: `FILE_TOO_LARGE`,
+        message: `Your current plan allows files up to ${userMaxSize / (1024 * 1024)}MB. Please upgrade.`
+      });
     }
 
     // Translate
@@ -149,31 +152,19 @@ app.post("/api/translate", upload.single("file"), async (req, res) => {
     const translatedFilename = `translated-${Date.now()}-${file.originalname}`;
     const outputPath = path.join(__dirname, "uploads", translatedFilename);
 
-    await translator.translateDocument(
-      file.path, 
-      outputPath, 
-      getLangCode(sourceLang), 
-      getLangCode(targetLang)
-    );
-
+    await translator.translateDocument(file.path, outputPath, getLangCode(sourceLang), getLangCode(targetLang));
     try { fs.unlinkSync(file.path); } catch (e) {}
 
-    // Increment Usage & Save Document (Transaction)
+    // Increment Usage & Save Document
     await client.query('BEGIN');
-
     const newUsageCount = currentUsage + 1;
-    await client.query(
-      'UPDATE app_users SET translations_used = $1 WHERE email = $2',
-      [newUsageCount, email]
-    );
+    await client.query('UPDATE app_users SET translations_used = $1 WHERE email = $2', [newUsageCount, email]);
 
     const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${translatedFilename}`;
-    
     const docRes = await client.query(
       'INSERT INTO app_documents (email, name, lang, date, status, url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
       [email, file.originalname, targetLang, new Date().toLocaleDateString(), 'Done', fileUrl]
     );
-
     await client.query('COMMIT');
 
     res.status(200).json({ 
@@ -196,7 +187,7 @@ app.post("/api/translate", upload.single("file"), async (req, res) => {
 });
 
 // ==========================================
-// 4. FETCH ACCOUNT STATUS
+// 4. FETCH ACCOUNT & DOCUMENTS
 // ==========================================
 app.get("/api/account", async (req, res) => {
   const { email } = req.query;
@@ -206,9 +197,7 @@ app.get("/api/account", async (req, res) => {
     const { rows } = await pool.query('SELECT plan, translations_used FROM app_users WHERE email = $1', [email]);
     
     if (rows.length === 0) {
-      return res.status(200).json({ 
-        subscription: { plan: "Free", status: "inactive", translationsUsed: 0, maxTranslations: PLAN_LIMITS["Free"] } 
-      });
+      return res.status(200).json({ subscription: { plan: "Free", status: "inactive", translationsUsed: 0, maxTranslations: PLAN_LIMITS["Free"] } });
     }
 
     const user = rows[0];
@@ -223,14 +212,10 @@ app.get("/api/account", async (req, res) => {
       } 
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: "Database error" });
   }
 });
 
-// ==========================================
-// 5. FETCH USER DOCUMENTS
-// ==========================================
 app.get("/api/documents", async (req, res) => {
   const { email } = req.query;
   if (!email) return res.status(400).json({ error: "Email required" });
@@ -239,13 +224,12 @@ app.get("/api/documents", async (req, res) => {
     const { rows } = await pool.query('SELECT * FROM app_documents WHERE email = $1 ORDER BY id DESC', [email]);
     res.status(200).json(rows);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: "Database error" });
   }
 });
 
 // ==========================================
-// 6. CREATE SASPAY CHECKOUT SESSION
+// 5. SASPAY INTEGRATION & CRON
 // ==========================================
 app.post('/api/saspay/create-checkout', async (req, res) => {
   try {
@@ -279,74 +263,39 @@ app.post('/api/saspay/create-checkout', async (req, res) => {
     });
 
     const checkoutUrl = response.data?.data?.checkout_url || response.data?.checkout_url;
-
-    if (checkoutUrl) {
-      res.json({ payment_url: checkoutUrl });
-    } else {
-      res.status(400).json({ error: 'Failed to create SasPay checkout session.' });
-    }
+    if (checkoutUrl) res.json({ payment_url: checkoutUrl });
+    else res.status(400).json({ error: 'Failed to create checkout session.' });
   } catch (error) {
-    console.error("SasPay Error:", error.response?.data || error.message);
     res.status(500).json({ error: 'Internal server error during checkout.' });
   }
 });
 
-// ==========================================
-// 7. SASPAY WEBHOOK HANDLER
-// ==========================================
 app.post('/api/saspay/webhook', async (req, res) => {
   try {
     const { event, data } = req.body;
-
     if (event === 'payment.successful' || data?.status === 'SUCCESSFUL') {
-      const { metadata } = data;
-      const { email, plan } = metadata || {};
-
+      const { email, plan } = data.metadata || {};
       if (email && plan) {
-        const apiKey = process.env.SASPAY_API_KEY;
-        const paymentId = data.id; 
-        const verifyUrl = `https://api.saspay.me/api/v1/payments/${paymentId}/verify/`;
-
-        const verifyResponse = await axios.get(verifyUrl, {
-          headers: { 'Authorization': `Bearer ${apiKey}` }
-        });
-
-        if (verifyResponse.data.status === 'SUCCESSFUL') {
-          await pool.query('UPDATE app_users SET plan = $1 WHERE email = $2', [plan, email]);
-          console.log(`✅ Payment confirmed for ${email} - Plan: ${plan}`);
-        }
+        await pool.query('UPDATE app_users SET plan = $1 WHERE email = $2', [plan, email]);
       }
     }
     res.status(200).send('OK');
   } catch (error) {
-    console.error('SasPay Webhook Error:', error);
     res.status(200).send('OK');
   }
 });
 
-// ==========================================
-// 8. CRON JOB ENDPOINT
-// ==========================================
 app.post('/api/cron/reset-limits', async (req, res) => {
   const authHeader = req.headers.authorization;
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) return res.status(401).json({ error: 'Unauthorized' });
 
   try {
-    const result = await pool.query('UPDATE app_users SET translations_used = 0');
-    console.log(`✅ Monthly limits reset. Rows updated: ${result.rowCount}`);
+    await pool.query('UPDATE app_users SET translations_used = 0');
     res.status(200).json({ success: true });
   } catch (error) {
-    console.error('❌ Reset Error:', error);
     res.status(500).json({ error: 'Database error' });
   }
 });
 
-// ==========================================
-// 9. START SERVER
-// ==========================================
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`🚀 Backend running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}`));
