@@ -3213,3 +3213,81 @@ body, html, #root {
     font-weight: 700 !important;
   }
 }
+
+/* =========================================
+   REAL MOBILE DEVICE FIXES
+   ========================================= */
+@media screen and (max-width: 850px) {
+  
+  /* 1. Stop horizontal scrolling */
+  html, body {
+    overflow-x: hidden !important;
+    width: 100% !important;
+  }
+
+  /* 2. Fix the Navbar (Prevent buttons from wrapping) */
+  .landing-navbar {
+    padding: 0.75rem 1rem !important;
+    gap: 0.5rem !important;
+  }
+
+  .landing-auth-buttons {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Force the Login and Signup buttons to stay on one line */
+  .landing-auth-buttons .btn-outline,
+  .landing-auth-buttons .btn-primary {
+    white-space: nowrap !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* Make the language switcher smaller */
+  .lang-switcher-pill {
+    padding: 2px !important;
+  }
+  .lang-btn {
+    padding: 4px 8px !important;
+    font-size: 0.75rem !important;
+  }
+
+  /* 3. Fix the Hero Section */
+  .landing-hero {
+    padding: 2rem 1rem !important;
+    text-align: center !important;
+  }
+  
+  .hero-text h1 {
+    font-size: 2rem !important; /* Smaller headline for phones */
+    line-height: 1.2 !important;
+  }
+
+  .hero-actions {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 0.75rem !important;
+  }
+
+  .hero-actions button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* 4. Fix the grids (Problem/Solution, Features, Footer) */
+  .problem-grid,
+  .features-grid,
+  .steps-container,
+  .footer-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 1.5rem !important;
+  }
+
+  .step-connector {
+    display: none !important; /* Hide the lines between steps */
+  }
+}
