@@ -6,7 +6,65 @@ const fs = require("fs");
 const deepl = require("deepl-node");
 const { Pool } = require("pg");
 require("dotenv").config();
+
 const axios = require('axios');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || "super_secret_key_change_me";
+
+
+// SIGNUP ROUTE
+app.post('/api/auth/signup', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await pool.query(
+      'INSERT INTO app_users (email, password_hash, plan, translations_used) VALUES ($1, $2, $3, $4)',
+      [email, hashedPassword, 'Free', 0]
+    );
+    const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, email });
+  } catch (err) {
+    res.status(400).json({ error: "Email already exists" });
+  }
+});
+
+// LOGIN ROUTE
+app.post('/api/auth/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const { rows } = await pool.query('SELECT * FROM app_users WHERE email = $1', [email]);
+    if (rows.length === 0) return res.status(401).json({ error: "Invalid credentials" });
+    
+    const valid = await bcrypt.compare(password, rows[0].password_hash);
+    if (!valid) return res.status(401).json({ error: "Invalid credentials" });
+
+    const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, email });
+  } catch (err) {
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
+// Add this near your other app.post routes
+app.post('/api/cron/reset-limits', async (req, res) => {
+  // 1. Check for the secret key
+  const authHeader = req.headers.authorization;
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // 2. Run the reset query in Neon
+  try {
+    const result = await pool.query('UPDATE app_users SET translations_used = 0');
+    console.log(`✅ Monthly limits reset successfully. Rows affected: ${result.rowCount}`);
+    res.status(200).json({ success: true, message: 'Limits reset' });
+  } catch (error) {
+    console.error('❌ Error resetting limits:', error);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
 
 const app = express();
 
