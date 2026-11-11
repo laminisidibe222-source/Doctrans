@@ -9,16 +9,22 @@ export default function Signup({ onSignupSuccess, goLogin, goBack }) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSignup = (e) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    // Temporary mock signup (Bypasses Supabase)
-    setTimeout(() => {
-      setLoading(false);
-      onSignupSuccess(email); // Logs the user in with their email
-    }, 800);
-  };
+  // In Login.jsx
+const handleSignup = async (e) => {
+  e.preventDefault();
+  const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/signup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, email, password })
+  });
+  const data = await res.json();
+  if (data.token) {
+    localStorage.setItem("doctrans_token", data.token);
+    onSignupSuccess(data.email);
+  } else {
+    alert(data.error);
+  }
+};
 
   const handleGoogleSignup = () => {
     alert("Google Auth will be enabled soon. Please use email for now.");

@@ -8,15 +8,21 @@ export default function Login({ onLoginSuccess, goSignup, goBack }) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e) => {
+  // In Login.jsx
+  const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    
-    // Temporary mock login
-    setTimeout(() => {
-      setLoading(false);
-      onLoginSuccess(email); 
-    }, 800);
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (data.token) {
+      localStorage.setItem("doctrans_token", data.token);
+      onLoginSuccess(data.email);
+    } else {
+      alert(data.error);
+    }
   };
 
   const handleGoogleLogin = () => {
