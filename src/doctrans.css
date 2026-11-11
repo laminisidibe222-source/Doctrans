@@ -3291,3 +3291,84 @@ body, html, #root {
     display: none !important; /* Hide the lines between steps */
   }
 }
+
+/* =========================================
+   MOBILE POLISH: HOW IT WORKS & FOOTER
+   ========================================= */
+@media screen and (max-width: 850px) {
+  
+  /* --- 1. Fix the "How it Works" Section --- */
+  .steps-container {
+    gap: 1.5rem !important;
+    padding: 0 1rem !important;
+  }
+
+  .step {
+    max-width: 100% !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Make the icons slightly smaller and tighter */
+  .step-icon-wrapper {
+    width: 56px !important;
+    height: 56px !important;
+    margin-bottom: 0.75rem !important; 
+  }
+
+  .step-icon {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  .step h4 {
+    font-size: 1.1rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+
+  /* Constrain the paragraph width so it's easy to read */
+  .step p {
+    font-size: 0.9rem !important;
+    max-width: 250px !important;
+    margin: 0 auto !important;
+    line-height: 1.4 !important;
+  }
+
+
+  /* --- 2. Fix the Footer --- */
+  .footer-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2rem !important;
+    text-align: left !important; /* Left-aligning looks way more professional */
+    padding: 0 1.5rem !important;
+  }
+
+  /* Align the brand logo and text to the left */
+  .footer-brand {
+    align-items: flex-start !important;
+  }
+
+  .footer-brand p {
+    text-align: left !important;
+    margin-top: 0.5rem !important;
+  }
+
+  /* Align the link columns to the left */
+  .footer-links-col {
+    align-items: flex-start !important;
+  }
+
+  .footer-links-col h4 {
+    margin-bottom: 0.75rem !important;
+    font-size: 1rem !important;
+  }
+
+  .footer-links-col a, 
+  .footer-links-col span {
+    text-align: left !important;
+    font-size: 0.95rem !important;
+    margin-bottom: 0.5rem !important; /* Tighter link spacing */
+  }
+}
