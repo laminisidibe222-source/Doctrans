@@ -188,6 +188,7 @@ export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup, l
           <h2>{t.landing.compTitle}</h2>
           <p>{t.landing.compSub}</p>
         </div>
+        <div className="comparison-scroll-shell">
         <div className="comparison-table-wrapper">
           <table className="comparison-table">
             <thead>
@@ -200,6 +201,7 @@ export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup, l
               <tr><td>{t.landing.compRow4}</td><td><CheckCircle2 className="text-green" size={20} /></td><td><span className="text-red">✕</span></td></tr>
             </tbody>
           </table>
+        </div>
         </div>
       </section>
 

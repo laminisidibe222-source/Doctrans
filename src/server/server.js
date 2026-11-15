@@ -148,12 +148,17 @@ app.post("/api/translate", upload.single("file"), async (req, res) => {
     }
 
     // Translate
+    const langMatches = (v, name) => v.includes(name);
     const getLangCode = (str) => {
-      if (!str || str === "Auto-Detect") return null;
-      if (str.includes("French")) return "fr";
-      if (str.includes("English")) return "en-US";
-      if (str.includes("Spanish")) return "es";
-      return null;
+      if (!str) return null;
+      const v = String(str).trim().toLowerCase();
+      if (v === "auto" || v === "auto-detect" || v === "détection auto" || v === "") return null;
+      if (v === "en") return "EN-US"; // DeepL requires the EN-US variant
+      if (v === "pt") return "PT-BR"; // DeepL requires the PT-BR variant
+      if (langMatches(v, "french")) return "FR"; // legacy labels ("French (FR)")
+      if (langMatches(v, "english")) return "EN-US";
+      if (langMatches(v, "spanish")) return "ES";
+      return v.toUpperCase(); // bg, cs, da, de, el, es, et, fi, fr, hu, it, ja, ko, lt, lv, nb, nl, pl, ro, ru, sk, sl, sv, tr, uk, zh
     };
 
     const translatedFilename = `translated-${Date.now()}-${file.originalname}`;

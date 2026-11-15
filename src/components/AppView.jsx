@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import "../doctrans.css";
 import { translations } from "../i18n";
+import { LANGUAGES, LANGUAGE_COUNT, langName } from "../lib/languages";
 import LanguageSwitcher from "./LanguageSwitcher";
 
 export default function AppView({
@@ -17,8 +18,8 @@ export default function AppView({
   
   const t = translations[locale] || translations["en"];
 
-  const [sourceLang, setSourceLang] = useState("Auto-Detect");
-  const [targetLang, setTargetLang] = useState("French (FR)");
+  const [sourceLang, setSourceLang] = useState("auto");
+  const [targetLang, setTargetLang] = useState("fr");
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   
@@ -29,7 +30,7 @@ export default function AppView({
   const [maxTranslations, setMaxTranslations] = useState(2);
   const [selectedDoc, setSelectedDoc] = useState(null);
 
-  const [defaultLang, setDefaultLang] = useState("French (FR)");
+  const [defaultLang, setDefaultLang] = useState("fr");
   const [preserveLayout, setPreserveLayout] = useState(true);
   const [emailNotifs, setEmailNotifs] = useState(true);
 
@@ -74,7 +75,7 @@ export default function AppView({
   };
 
   const handleSwap = () => {
-    if (sourceLang === "Auto-Detect" || sourceLang === "Détection auto") return;
+    if (sourceLang === "auto") return;
     setSourceLang(targetLang);
     setTargetLang(sourceLang);
   };
@@ -159,6 +160,10 @@ export default function AppView({
           </button>
         </nav>
 
+        <div className="sidebar-lang">
+          <LanguageSwitcher locale={locale} setLocale={setLocale} />
+        </div>
+
         <div className="sidebar-footer">
           <div className="promo-card">
             <div className="promo-icon"><Award size={20} /></div>
@@ -225,7 +230,7 @@ export default function AppView({
                   </div>
                   <div className="action-card">
                     <div className="action-icon bg-orange"><Globe size={20} /></div>
-                    <div className="action-info"><h4>{t.dash.languages}</h4><p>22 {t.dash.available}</p></div>
+                    <div className="action-info"><h4>{t.dash.languages}</h4><p>{LANGUAGE_COUNT} {t.dash.available}</p></div>
                   </div>
                 </div>
                 <div className="chart-card">
@@ -323,7 +328,10 @@ export default function AppView({
                         <div className="custom-select-wrapper">
                           <Globe size={16} className="select-icon" />
                           <select value={sourceLang} onChange={(e) => setSourceLang(e.target.value)}>
-                            <option>{t.dash.auto}</option><option>English (EN)</option><option>French (FR)</option><option>Spanish (ES)</option>
+                            <option value="auto">{t.dash.auto}</option>
+                            {LANGUAGES.map((l) => (
+                              <option key={l.code} value={l.code}>{locale === "fr" ? l.fr : l.en}</option>
+                            ))}
                           </select>
                         </div>
                       </div>
@@ -333,7 +341,9 @@ export default function AppView({
                         <div className="custom-select-wrapper">
                           <Globe size={16} className="select-icon" />
                           <select value={targetLang} onChange={(e) => setTargetLang(e.target.value)}>
-                            <option>French (FR)</option><option>English (EN)</option><option>Spanish (ES)</option>
+                            {LANGUAGES.map((l) => (
+                              <option key={l.code} value={l.code}>{locale === "fr" ? l.fr : l.en}</option>
+                            ))}
                           </select>
                         </div>
                       </div>
@@ -369,7 +379,7 @@ export default function AppView({
                     documents.map((doc) => (
                       <tr key={doc.id}>
                         <td className="doc-name-cell"><FileText size={16} /> {doc.name}</td>
-                        <td>{doc.lang}</td>
+                        <td>{langName(doc.lang, locale)}</td>
                         <td className="hide-mobile">{doc.date}</td>
                         <td><span className="status-badge success">{doc.status}</span></td>
                         <td>

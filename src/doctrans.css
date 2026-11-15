@@ -86,6 +86,7 @@ body {
   color: white;
   border: none;
   padding: 0.6rem 1.2rem;
+  min-height: 44px; /* touch target */
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
@@ -105,6 +106,7 @@ body {
   color: var(--text-main);
   border: 1px solid var(--border-color);
   padding: 0.6rem 1.2rem;
+  min-height: 44px; /* touch target */
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
@@ -1128,14 +1130,17 @@ button { touch-action: manipulation; }
   gap: 0.5rem;
   z-index: 99;
   opacity: 0;
+  visibility: hidden; /* removed from tab order while closed */
   transform: translateY(-10px);
   pointer-events: none;
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition: opacity 0.25s ease, transform 0.25s ease, visibility 0s linear 0.25s;
 }
 .landing-mobile-nav.open {
   opacity: 1;
+  visibility: visible;
   transform: translateY(0);
   pointer-events: auto;
+  transition: opacity 0.25s ease, transform 0.25s ease;
 }
 .landing-mobile-nav a {
   display: block;
@@ -1231,6 +1236,7 @@ button { touch-action: manipulation; }
   min-height: 100dvh;
   width: 100%;
   background-color: #f4f5f7;
+  text-align: left; /* app pages read left-aligned like a professional SaaS */
 }
 
 /* Sidebar â€” off-canvas drawer on mobile */
@@ -1285,6 +1291,15 @@ button { touch-action: manipulation; }
 .logout-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 0.75rem; min-height: 44px; background: transparent; color: #6b7280; border: none; font-weight: 500; font-size: 0.9rem; cursor: pointer; transition: color 0.2s; }
 .logout-btn:hover { color: #ef4444; }
 
+/* FR/EN toggle inside the sidebar drawer (mobile only) */
+.sidebar-lang {
+  display: flex;
+  justify-content: center;
+  padding: 0.75rem 0.5rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 /* Main content â€” normal page flow on mobile */
 .eduplex-main {
   flex: 1;
@@ -1308,7 +1323,7 @@ button { touch-action: manipulation; }
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  flex: 1 1 auto;
+  flex: 1 1 0;   /* shrink so row 1 always fits lang + bell + avatar */
   min-width: 0;
 }
 .header-title-block { min-width: 0; }
@@ -1336,7 +1351,7 @@ button { touch-action: manipulation; }
 .header-actions {
   display: contents; /* children flow into .eduplex-header on mobile */
 }
-.header-actions .lang-switcher-pill { order: 2; flex-shrink: 0; }
+.header-actions .lang-switcher-pill { order: 2; flex-shrink: 0; display: none; } /* FR/EN drawer on mobile (spec) */
 .header-actions .icon-btn { order: 2; }
 .header-actions .header-avatar { order: 2; }
 
@@ -2346,6 +2361,7 @@ button { touch-action: manipulation; }
 
 .btn-outline-sm {
   padding: 0.5rem 1.25rem;
+  min-height: 44px;
   background: white;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
@@ -2725,6 +2741,7 @@ button { touch-action: manipulation; }
   align-items: center;
   gap: 8px;
   padding: 0.6rem 1.2rem;
+  min-height: 44px; /* touch target */
   background: #ffffff;
   border: 1px solid #fecaca;
   border-radius: 8px;
@@ -3016,6 +3033,8 @@ button { touch-action: manipulation; }
    TABLET (â‰¥768px) â€” tablet polish
    ========================================= */
 @media (min-width: 768px) {
+  .sidebar-lang { display: none; }
+  .header-actions .lang-switcher-pill { display: inline-flex; }
   .quick-actions-row { grid-template-columns: repeat(3, 1fr); gap: 1rem; }
   .search-bar { order: 0; flex: 0 1 220px; width: auto; }
   .eduplex-header { margin-bottom: 1.25rem; }
@@ -3331,4 +3350,221 @@ button { touch-action: manipulation; }
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* =========================================================
+   MOBILE RESPONSIVE FIXES  (<= 768px)
+   Each block targets a measured cause, not a cosmetic guess:
+   1. auth panel squeezed the login form (no mobile rule existed)
+   2. billing grid used 2fr/1fr !important with no override
+   3. doc table had min-width 440px inside overflow:hidden
+   4. header subtitle was nowrap + ellipsis and always truncated
+   5. touch targets below the 44px norm
+   ========================================================= */
+@media screen and (max-width: 768px) {
+
+  /* ---------- 1. AUTH: stack, never squeeze ---------- */
+  .auth-wrapper {
+    position: absolute;          /* fixed clipped tall forms on short phones */
+    align-items: flex-start;
+    padding: 0.75rem;
+    height: auto;
+    min-height: 100%;
+  }
+
+  .auth-container {
+    flex-direction: column;      /* was row → blue panel ate half the width */
+    height: auto;
+    max-height: none;
+    border-radius: 16px;
+  }
+
+  .auth-left {
+    padding: 1.5rem 1.25rem;
+    order: 1;
+    width: 100%;
+  }
+
+  /* The decorative blue panel is pure decoration on desktop; on phones it
+     only stole space and clipped the submit button. */
+  .auth-right {
+    display: none;
+  }
+
+  .auth-header h2 { font-size: 1.35rem; line-height: 1.25; }
+  .auth-header { margin-bottom: 1.25rem; }
+  .back-btn { margin-bottom: 1.25rem; min-height: 40px; }
+
+  /* keep the remember/forgot row from wrapping into unreadable 2-line labels */
+  .form-options {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+  .form-options .remember,
+  .form-options .forgot-link { white-space: nowrap; min-height: 40px; display: inline-flex; align-items: center; }
+
+  .input-group input { font-size: 16px; } /* stops iOS zoom-on-focus */
+  .auth-btn { width: 100%; min-height: 48px; }
+
+  /* ---------- 2. BILLING: one column, full width ---------- */
+  .billing-top-row {
+    grid-template-columns: 1fr !important;
+    gap: 1rem;
+  }
+
+  .billing-container {
+    height: auto;
+    overflow-y: visible;
+    padding-right: 0;
+  }
+
+  .billing-info-row {
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+    justify-content: flex-start;
+  }
+  .billing-info-row .info-item { flex: 1 1 40%; min-width: 0; }
+
+  .plan-header-row { flex-wrap: wrap; gap: 0.5rem; }
+  .current-plan-card,
+  .payment-method-card { padding: 1.15rem; }
+
+  /* available plans stack instead of overflowing right */
+  .upgrade-cards-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem;  /* room for the -12px "MOST POPULAR" tag on the stacked card */
+  }
+  .upgrade-card { padding: 1.25rem; }
+  /* keep the badge from poking into the card above when stacked */
+  .upgrade-card.popular { margin-top: 0.35rem; }
+  .popular-tag { font-size: 0.65rem; padding: 3px 12px; }
+
+  .pricing-cards {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.25rem;
+    padding: 0 1rem;
+  }
+  .pricing-card {
+    width: 100% !important;
+    max-width: 100%;
+    padding: 1.5rem 1.25rem;
+  }
+
+  /* the 3-up plan chooser inside "new translation" is unreadable at 390px */
+  .plan-selector {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  .plan-option { padding: 0.85rem 0.75rem; }
+
+  /* ---------- 3. DOCUMENTS TABLE: scroll instead of clip ---------- */
+  .documents-table-card {
+    padding: 0.75rem;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  .doc-table {
+    min-width: 0;             /* was 440px → forced clipping */
+  }
+  /* hide the low-value columns on phones so the table fits */
+  .doc-table td.text-center[colspan] {
+    white-space: normal !important;
+    font-size: 0.85rem;
+    padding: 1.25rem 0.5rem;
+  }
+  .doc-table th,
+  .doc-table td {
+    padding: 0.7rem 0.6rem;
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+
+  /* ---------- 4. HEADER: wrap the subtitle, don't ellipsis it ---------- */
+  .header-greeting h1 { white-space: normal; overflow: visible; text-overflow: clip; }
+  .header-greeting p {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    line-height: 1.4;
+  }
+  .header-title-block { flex: 1 1 auto; min-width: 0; }
+
+  /* ---------- 5. TOUCH TARGETS ---------- */
+  .footer-links a,
+  .footer-bottom a,
+  .footer-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0 2px;
+  }
+  .back-btn,
+  .link,
+  .forgot-link { min-height: 40px; }
+
+  .landing-menu-btn,
+  .mobile-menu-btn,
+  .mobile-close-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+  }
+
+  /* ---------- Mobile menu: dim the page behind it ---------- */
+  .landing-mobile-nav {
+    max-height: calc(100vh - 82px);
+    overflow-y: auto;
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+    box-shadow: 0 18px 40px rgba(2, 6, 23, 0.18);
+  }
+
+  /* ---------- Comparison table: show it scrolls ---------- */
+  /* The wrapper scrolls, so the fade must live in a non-scrolling parent. */
+  .comparison-scroll-shell {
+    position: relative;
+  }
+  .comparison-scroll-shell::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 44px;
+    height: 100%;
+    pointer-events: none;
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0), #fff 72%);
+  }
+  /* Nudge so the fade sits over the card padding, not the page edge */
+  .landing-comparison .comparison-scroll-shell::after { right: 1rem; }
+
+  .landing-comparison .comparison-table-wrapper {
+    border-radius: 12px;
+  }
+
+  /* ---------- Section rhythm on small screens ---------- */
+  .landing-hero { padding: 2rem 1rem 2.5rem; }
+  .hero-actions { flex-direction: column; gap: 0.75rem; }
+  .hero-actions .btn-large { width: 100%; justify-content: center; }
+  .steps-container,
+  .problem-grid,
+  .features-grid { padding: 0 1rem !important; }
+
+  .section-title,
+  .landing-section h2 { font-size: 1.55rem !important; line-height: 1.25 !important; }
+}
+
+/* Very small phones (iPhone SE, 320–360px) */
+@media screen and (max-width: 380px) {
+  .auth-left { padding: 1.25rem 1rem; }
+  .landing-navbar { padding: 0.5rem 0.75rem; }
+  .brand-name { font-size: 1rem; }
+  .section-title,
+  .landing-section h2 { font-size: 1.35rem !important; }
+  .lang-switcher-pill { padding: 2px; }
 }
