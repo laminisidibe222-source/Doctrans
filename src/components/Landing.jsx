@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { 
   ArrowRight, ShieldCheck, Zap, Layout, Lock, CheckCircle2, 
-  Globe, Users, Sparkles, FileText, Upload, Download, Play, Clock, Layers, Eye, Database
+  Globe, Users, Sparkles, FileText, Upload, Download, Play, Clock, Layers, Eye, Database,
+  Menu, X
 } from "lucide-react";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { translations } from "../i18n";
@@ -9,12 +10,37 @@ import "../doctrans.css";
 
 export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup, locale, setLocale }) {
   const t = translations[locale] || translations["en"];
+  const [menuOpen, setMenuOpen] = useState(false);
+  const navRef = useRef(null);
+
+  const closeMenu = () => setMenuOpen(false);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    // Lock body scroll while the mobile menu is open
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onPointerDown = (e) => {
+      if (navRef.current && !navRef.current.contains(e.target)) setMenuOpen(false);
+    };
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [menuOpen]);
 
   return (
     <div className="landing-page">
       
       {/* NAVBAR */}
-      <nav className="landing-navbar">
+      <nav className="landing-navbar" ref={navRef}>
         <div className="brand-logo" onClick={goApp} style={{ cursor: 'pointer' }}>
           <div className="brand-icon">D</div>
           <span className="brand-name">DocTrans</span>
@@ -31,6 +57,24 @@ export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup, l
           <LanguageSwitcher locale={locale} setLocale={setLocale} />
           <button onClick={goLogin} className="btn-outline" style={{ marginLeft: '1rem' }}>{t.landing.login}</button>
           <button onClick={goSignup} className="btn-primary">{t.landing.signup}</button>
+        </div>
+
+        <button
+          className="landing-menu-btn"
+          onClick={() => setMenuOpen(v => !v)}
+          aria-label={locale === 'fr' ? (menuOpen ? "Fermer le menu" : "Ouvrir le menu") : (menuOpen ? "Close menu" : "Open menu")}
+          aria-expanded={menuOpen}
+          aria-controls="landing-mobile-nav"
+        >
+          {menuOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
+        <div className={`landing-mobile-nav ${menuOpen ? "open" : ""}`} id="landing-mobile-nav">
+          <a href="#features" onClick={closeMenu}>{t.landing.navFeatures}</a>
+          <a href="#how-it-works" onClick={closeMenu}>{t.landing.navHowItWorks}</a>
+          <a href="#pricing" onClick={closeMenu}>{t.landing.navPricing}</a>
+          <a href="#faq" onClick={closeMenu}>{t.landing.navFaq}</a>
+          <button onClick={() => { closeMenu(); goLogin(); }} className="btn-outline landing-mobile-nav-btn">{t.landing.login}</button>
+          <button onClick={() => { closeMenu(); goSignup(); }} className="btn-primary landing-mobile-nav-btn">{t.landing.signup}</button>
         </div>
       </nav>
 

@@ -179,7 +179,7 @@ body {
 }
 
 .hero-text h1 {
-  font-size: 3.5rem;
+  font-size: clamp(2rem, 8vw, 3.25rem);
   font-weight: 800;
   line-height: 1.1;
   margin-bottom: 1.5rem;
@@ -187,7 +187,7 @@ body {
 }
 
 .hero-text p {
-  font-size: 1.15rem;
+  font-size: 16px;
   color: var(--text-muted);
   line-height: 1.6;
   margin-bottom: 2rem;
@@ -195,8 +195,27 @@ body {
 
 .hero-actions {
   display: flex;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 12px;
   margin-bottom: 1rem;
+  width: 100%;
+}
+
+.hero-actions .btn-primary,
+.hero-actions .btn-outline {
+  width: 100%;
+  justify-content: center;
+}
+
+@media (min-width: 768px) {
+  .hero-actions {
+    flex-direction: row;
+    width: auto;
+  }
+  .hero-actions .btn-primary,
+  .hero-actions .btn-outline {
+    width: auto;
+  }
 }
 
 .hero-subtext {
@@ -987,29 +1006,50 @@ body {
   margin: 0;
   padding: 0;
 }
-body, html, #root {
-  height: 100%;
+/* No fixed heights here — the viewport must be free to scroll on mobile.
+   Only overflow-x is clipped (page-level), not the vertical axis. */
+html {
+  -webkit-text-size-adjust: 100%; /* stop iOS font inflation breaking layouts */
+  text-size-adjust: 100%;
+}
+body, html {
   width: 100%;
   overflow-x: hidden;
   font-family: 'Inter', system-ui, sans-serif;
 }
 
+/* Big, fat touch targets on every button */
+button { touch-action: manipulation; }
+
+/* #root grows with its content on mobile so the document (not an inner
+   container) is the only thing that scrolls. */
+#root {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
 /* =========================================
-   LANDING PAGE (FULL WIDTH)
+   LANDING PAGE (FULL WIDTH, mobile-first)
    ========================================= */
 .landing-page {
-  width: 100vw;
+  width: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
   background-color: #ffffff;
   overflow-x: hidden;
 }
 
-/* Remove max-width, allow it to stretch full screen */
+/* Navbar â€” nowrap, sticky, never overflows the viewport */
 .landing-navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.2rem 5%;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+  min-width: 0;
+  padding: 0.75rem 1rem;
   background: #ffffff;
   border-bottom: 1px solid #e2e8f0;
   position: sticky;
@@ -1018,68 +1058,211 @@ body, html, #root {
   width: 100%;
 }
 
-.landing-hero {
+.brand-logo {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 6rem 5%; /* Responsive padding on the sides */
-  width: 100%;
-  gap: 4rem;
+  gap: 8px;
+  flex-shrink: 0;
+  min-width: 0;
+}
+.brand-icon {
+  width: 32px;
+  height: 32px;
+  background: #0055ff;
+  border-radius: 8px;
+  color: white;
+  font-weight: 800;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.brand-name { font-size: 1.15rem; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
+
+/* Desktop-only nav links (hidden below 768px) */
+.landing-nav-links { display: none; }
+
+/* Auth buttons hidden on mobile; the FR/EN toggle inside stays visible (compact) */
+.landing-auth-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  margin-left: auto; /* push the toggle + hamburger right on mobile */
+}
+.landing-auth-buttons .btn-outline,
+.landing-auth-buttons .btn-primary {
+  display: none;
 }
 
-/* Fix the massive line breaks */
+/* Hamburger button â€” visible below 768px only */
+.landing-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  color: #0f172a;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.landing-menu-btn:hover { background: #f8fafc; }
+
+/* Mobile drawer panel */
+.landing-mobile-nav {
+  position: absolute;
+  top: calc(100% + 1px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 99;
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.landing-mobile-nav.open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.landing-mobile-nav a {
+  display: block;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  color: #0f172a;
+  font-weight: 600;
+  font-size: 1rem;
+  text-decoration: none;
+}
+.landing-mobile-nav a:hover,
+.landing-mobile-nav a:focus-visible {
+  background: #f1f5f9;
+  outline: 2px solid var(--primary);
+}
+.landing-mobile-nav .landing-mobile-nav-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Hero â€” stacked on mobile, split on desktop */
+.landing-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2.5rem 1.25rem 3.5rem;
+  width: 100%;
+  gap: 2.5rem;
+}
+
 .hero-text {
   flex: 1;
-  max-width: 50%; 
-}
-
-.hero-text h1 {
-  font-size: clamp(2.5rem, 5vw, 4rem); /* Scales beautifully without breaking */
-  font-weight: 800;
-  line-height: 1.1;
-  margin-bottom: 1.5rem;
-  letter-spacing: -0.03em;
-}
-
-.hero-text p {
-  font-size: 1.15rem;
-  color: #64748b;
-  line-height: 1.6;
-  margin-bottom: 2rem;
-  max-width: 600px;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .hero-visual {
   flex: 1;
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .landing-navbar {
+    padding: 1.1rem 5%;
+  }
+  .landing-nav-links {
+    display: flex;
+    gap: 2rem;
+  }
+  .landing-auth-buttons {
+    gap: 1rem;
+    margin-left: 0;
+  }
+  .landing-auth-buttons .btn-outline,
+  .landing-auth-buttons .btn-primary {
+    display: inline-flex;
+  }
+  .landing-menu-btn {
+    display: none;
+  }
+  .landing-mobile-nav {
+    display: none;
+  }
+  .landing-hero {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+    padding: 4rem 5%;
+    gap: 3rem;
+  }
+  .hero-text {
+    max-width: 550px;
+  }
+  .hero-visual {
+    justify-content: flex-end;
+  }
 }
 
 /* =========================================
-   EDUplex DASHBOARD (FULL SCREEN)
+   EDUplex DASHBOARD â€” mobile-first layout
+   Mobile: normal page flow (body scrolls), sidebar is an
+   off-canvas drawer. Desktop â‰¥1024px: fixed sidebar + scrollable main.
    ========================================= */
 .eduplex-layout {
   display: flex;
-  height: 100vh;
-  width: 100vw; /* Stretches to full width */
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
   background-color: #f4f5f7;
-  padding: 1.5rem; /* Keeps a nice little gap around the edges */
-  box-sizing: border-box;
-  overflow: hidden; /* Kills scrolling on the page */
 }
 
-/* Sidebar */
+/* Sidebar â€” off-canvas drawer on mobile */
 .eduplex-sidebar {
-  width: 240px;
-  flex-shrink: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 260px;
+  z-index: 1000;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
   background: #1a1a1e;
-  border-radius: 24px;
+  border-radius: 0;
+  margin: 0;
   display: flex;
   flex-direction: column;
   padding: 1.5rem 1rem;
   color: white;
-  margin-right: 1.5rem;
-  height: 100%;
+  overflow-y: auto;
+}
+.eduplex-sidebar.open {
+  transform: translateX(0);
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  z-index: 999;
+  border: 0;
+  cursor: pointer;
 }
 
 .sidebar-logo { display: flex; align-items: center; gap: 12px; padding: 0 0.5rem; margin-bottom: 2rem; }
@@ -1088,7 +1271,7 @@ body, html, #root {
 .logo-text { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.5px; }
 
 .sidebar-nav { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
-.nav-btn { display: flex; align-items: center; gap: 12px; padding: 0.75rem 1rem; background: transparent; border: none; border-radius: 12px; color: #9ca3af; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s; text-align: left; }
+.nav-btn { display: flex; align-items: center; gap: 12px; padding: 0.75rem 1rem; min-height: 44px; background: transparent; border: none; border-radius: 12px; color: #9ca3af; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s; text-align: left; }
 .nav-btn:hover { color: white; background: rgba(255, 255, 255, 0.05); }
 .nav-btn.active { background: #D4FF32; color: #1a1a1e; font-weight: 600; }
 
@@ -1097,81 +1280,126 @@ body, html, #root {
 .promo-icon { width: 36px; height: 36px; background: rgba(212, 255, 50, 0.2); color: #D4FF32; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem auto; }
 .promo-card p { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.25rem; }
 .promo-card span { font-size: 0.75rem; color: #9ca3af; display: block; margin-bottom: 1rem; }
-.promo-card button { width: 100%; padding: 0.6rem; background: #D4FF32; color: #1a1a1e; border: none; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
+.promo-card button { width: 100%; padding: 0.6rem; min-height: 44px; background: #D4FF32; color: #1a1a1e; border: none; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
 
-.logout-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 0.75rem; background: transparent; color: #6b7280; border: none; font-weight: 500; font-size: 0.9rem; cursor: pointer; transition: color 0.2s; }
+.logout-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 0.75rem; min-height: 44px; background: transparent; color: #6b7280; border: none; font-weight: 500; font-size: 0.9rem; cursor: pointer; transition: color 0.2s; }
 .logout-btn:hover { color: #ef4444; }
 
-/* Main Content */
+/* Main content â€” normal page flow on mobile */
 .eduplex-main {
   flex: 1;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  overflow: hidden;
+  min-width: 0;
+  padding: 0.75rem;
 }
 
-.eduplex-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-shrink: 0; }
-.header-greeting h1 { font-size: 1.6rem; font-weight: 700; color: #111827; margin-bottom: 0.25rem; }
+/* Header â€” two rows on mobile (title row, then full-width search) */
+.eduplex-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+}
+.header-greeting {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.header-title-block { min-width: 0; }
+.header-greeting h1 { font-size: 1.15rem; font-weight: 700; color: #111827; margin-bottom: 0.125rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 .header-greeting h1 span { color: #6b7280; }
-.header-greeting p { color: #6b7280; font-size: 0.9rem; }
+.header-greeting p { color: #6b7280; font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 
-.header-actions { display: flex; align-items: center; gap: 1rem; }
-.search-bar { display: flex; align-items: center; gap: 8px; background: white; padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid #e5e7eb; }
-.search-bar input { border: none; outline: none; font-size: 0.9rem; width: 150px; }
-.icon-btn { width: 36px; height: 36px; background: white; border: 1px solid #e5e7eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #6b7280; }
-.header-avatar { width: 36px; height: 36px; background: #D4FF32; color: #1a1a1e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.mobile-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111827;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.mobile-menu-btn:hover { background: #f9fafb; }
+.mobile-close-btn { display: inline-flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.1); border: none; border-radius: 50%; width: 44px; height: 44px; color: #ffffff; position: absolute; top: 1rem; right: 1rem; cursor: pointer; }
 
-/* Dashboard Grid (Fills remaining space perfectly) */
+.header-actions {
+  display: contents; /* children flow into .eduplex-header on mobile */
+}
+.header-actions .lang-switcher-pill { order: 2; flex-shrink: 0; }
+.header-actions .icon-btn { order: 2; }
+.header-actions .header-avatar { order: 2; }
+
+.search-bar {
+  order: 3;
+  flex: 1 1 100%;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  padding: 0 0.75rem;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+}
+.search-bar input { border: none; outline: none; font-size: 0.9rem; width: 100%; min-width: 0; height: 44px; background: transparent; color: #0f172a; }
+.icon-btn { width: 44px; height: 44px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: #6b7280; flex-shrink: 0; }
+.header-avatar { width: 44px; height: 44px; background: #D4FF32; color: #1a1a1e; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex-shrink: 0; }
+
+/* Dashboard grid â€” single column on mobile */
 .dashboard-grid {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 1.5rem;
-  min-height: 0;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
 }
 
 .grid-main, .grid-side {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  height: 100%;
-  min-height: 0;
-  overflow-y: auto; 
-  padding-right: 5px;
+  gap: 16px;
+  min-width: 0;
 }
 
-.grid-main::-webkit-scrollbar, .grid-side::-webkit-scrollbar { width: 4px; }
-.grid-main::-webkit-scrollbar-thumb, .grid-side::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-
 /* Cards */
-.quick-actions-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; flex-shrink: 0; }
-.action-card { background: white; padding: 1.25rem; border-radius: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border: 1px solid #e5e7eb; transition: transform 0.2s; }
+.quick-actions-row { display: grid; grid-template-columns: 1fr; gap: 16px; flex-shrink: 0; }
+.action-card { background: white; padding: 1rem; min-height: 44px; border-radius: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; border: 1px solid #e5e7eb; transition: transform 0.2s; min-width: 0; }
 .action-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-.action-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+.action-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .bg-purple { background: #f3e8ff; color: #9333ea; }
 .bg-green { background: #dcfce7; color: #16a34a; }
 .bg-orange { background: #ffedd5; color: #ea580c; }
-.action-info h4 { font-size: 0.9rem; font-weight: 600; color: #111827; }
+.action-info { min-width: 0; }
+.action-info h4 { font-size: 0.9rem; font-weight: 600; color: #111827; overflow-wrap: anywhere; }
 .action-info p { font-size: 0.8rem; color: #6b7280; }
 
-.chart-card { background: white; border-radius: 16px; padding: 1.5rem; border: 1px solid #e5e7eb; flex: 1; display: flex; flex-direction: column; min-height: 200px; }
-.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-.card-header h3 { font-size: 1.1rem; font-weight: 700; color: #111827; }
-.chart-select { border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.25rem 0.5rem; font-size: 0.85rem; color: #6b7280; outline: none; }
-.mock-chart { display: flex; justify-content: space-between; align-items: flex-end; flex: 1; padding-top: 1rem; }
-.chart-bar-wrapper { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 10%; height: 100%; justify-content: flex-end; }
+.chart-card { background: white; border-radius: 16px; padding: 1.25rem; border: 1px solid #e5e7eb; display: flex; flex-direction: column; min-height: 200px; min-width: 0; }
+.card-header { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.card-header h3 { font-size: 1rem; font-weight: 700; color: #111827; }
+.chart-select { border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.4rem 0.5rem; font-size: 0.85rem; color: #6b7280; outline: none; min-height: 44px; }
+.mock-chart { display: flex; justify-content: space-between; align-items: flex-end; flex: 1; padding-top: 1rem; min-width: 0; }
+.chart-bar-wrapper { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 12%; height: 100%; justify-content: flex-end; min-width: 0; }
 .chart-bar { width: 100%; background: #D4FF32; border-radius: 6px; transition: height 0.3s; }
 .chart-label { font-size: 0.75rem; color: #9ca3af; font-weight: 500; }
 
-.list-card { background: white; border-radius: 16px; padding: 1.5rem; border: 1px solid #e5e7eb; flex-shrink: 0; }
-.text-btn { background: transparent; border: none; color: #6b7280; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+.list-card { background: white; border-radius: 16px; padding: 1.25rem; border: 1px solid #e5e7eb; flex-shrink: 0; }
+.text-btn { background: transparent; border: none; color: #6b7280; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 4px; cursor: pointer; min-height: 44px; }
 .list-item { display: flex; align-items: center; gap: 12px; padding: 1rem 0; border-bottom: 1px solid #f3f4f6; }
 .list-item:last-child { border-bottom: none; padding-bottom: 0; }
-.list-icon { width: 36px; height: 36px; background: #f3f4f6; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #6b7280; }
-.list-info { flex: 1; }
-.list-info h4 { font-size: 0.9rem; font-weight: 600; color: #111827; margin-bottom: 2px; }
+.list-icon { width: 36px; height: 36px; background: #f3f4f6; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #6b7280; flex-shrink: 0; }
+.list-info { flex: 1; min-width: 0; }
+.list-info h4 { font-size: 0.9rem; font-weight: 600; color: #111827; margin-bottom: 2px; overflow-wrap: anywhere; }
 .list-info p { font-size: 0.8rem; color: #6b7280; margin-bottom: 6px; }
 .progress-bar { height: 6px; background: #f3f4f6; border-radius: 3px; overflow: hidden; }
 .progress-fill { height: 100%; background: #9333ea; border-radius: 3px; }
@@ -1179,30 +1407,31 @@ body, html, #root {
 .status-badge.processing { background: #f3e8ff; color: #9333ea; }
 .status-badge.success { background: #dcfce7; color: #16a34a; }
 
-.side-card { background: white; border-radius: 16px; padding: 1.5rem; border: 1px solid #e5e7eb; flex-shrink: 0; }
+.side-card { background: white; border-radius: 16px; padding: 1.25rem; border: 1px solid #e5e7eb; flex-shrink: 0; min-width: 0; }
 .plan-card { background: #1a1a1e; color: white; border: none; }
-.plan-header { display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; }
-.plan-badge-icon { width: 36px; height: 36px; background: #D4FF32; color: #1a1a1e; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; }
+.plan-header { display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; min-width: 0; }
+.plan-badge-icon { width: 36px; height: 36px; background: #D4FF32; color: #1a1a1e; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; flex-shrink: 0; }
 .plan-header h4 { font-size: 1rem; font-weight: 700; }
 .plan-header p { font-size: 0.75rem; color: #9ca3af; }
-.plan-desc { font-size: 0.85rem; color: #d1d5db; margin-bottom: 1.5rem; line-height: 1.4; }
-.btn-lime { width: 100%; padding: 0.75rem; background: #D4FF32; color: #1a1a1e; border: none; border-radius: 8px; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+.plan-desc { font-size: 0.85rem; color: #d1d5db; margin-bottom: 1.5rem; line-height: 1.4; overflow-wrap: anywhere; }
+.btn-lime { width: 100%; padding: 0.75rem; background: #D4FF32; color: #1a1a1e; border: none; border-radius: 8px; font-weight: 700; font-size: 0.9rem; min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
 
 .activity-feed { display: flex; flex-direction: column; gap: 1.25rem; }
-.feed-item { display: flex; gap: 12px; position: relative; }
+.feed-item { display: flex; gap: 12px; position: relative; min-width: 0; }
 .feed-item:not(:last-child)::before { content: ""; position: absolute; left: 5px; top: 16px; bottom: -20px; width: 2px; background: #f3f4f6; }
-.feed-dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 4px; z-index: 1; border: 2px solid white; box-shadow: 0 0 0 2px #f3f4f6; }
+.feed-dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 4px; z-index: 1; border: 2px solid white; box-shadow: 0 0 0 2px #f3f4f6; flex-shrink: 0; }
 .feed-dot.bg-green { background: #10b981; box-shadow: 0 0 0 2px #dcfce7; }
 .feed-dot.bg-purple { background: #9333ea; box-shadow: 0 0 0 2px #f3e8ff; }
 .feed-dot.bg-orange { background: #ea580c; box-shadow: 0 0 0 2px #ffedd5; }
-.feed-text h4 { font-size: 0.85rem; font-weight: 600; color: #111827; }
-.feed-text p { font-size: 0.8rem; color: #6b7280; margin: 2px 0; }
+.feed-text { min-width: 0; }
+.feed-text h4 { font-size: 0.85rem; font-weight: 600; color: #111827; overflow-wrap: anywhere; }
+.feed-text p { font-size: 0.8rem; color: #6b7280; margin: 2px 0; overflow-wrap: anywhere; }
 .feed-text span { font-size: 0.75rem; color: #9ca3af; }
 
 .promo-dark { background: #1a1a1e; color: white; border: none; }
 .promo-dark h4 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
 .promo-dark p { font-size: 0.85rem; color: #9ca3af; margin-bottom: 1rem; line-height: 1.4; }
-.btn-white { width: 100%; padding: 0.6rem; background: white; color: #1a1a1e; border: none; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
+.btn-white { width: 100%; padding: 0.6rem; background: white; color: #1a1a1e; border: none; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; min-height: 44px; }
 
 /* =========================================
    FINAL CTA BANNER (Redesigned)
@@ -1343,13 +1572,13 @@ body, html, #root {
 
 .checkout-close {
   position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
+  top: 1rem;
+  right: 1rem;
   background: #f1f5f9;
   border: none;
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1426,21 +1655,29 @@ body, html, #root {
 .upload-card p { color: #64748b; font-size: 0.95rem; }
 .upload-hint { font-size: 0.85rem; color: #94a3b8; margin-bottom: 1.5rem; }
 
-.btn-upload { display: inline-block; padding: 0.75rem 2rem; cursor: pointer; }
+.btn-upload { display: inline-block; padding: 0.75rem 2rem; cursor: pointer; min-height: 44px; }
+
+.hide-mobile {
+  display: none;
+}
+
+.doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 440px; /* keep readable on phones; card scrolls if needed */
+}
+.doc-table th { text-align: left; padding: 1rem; font-size: 0.8rem; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e5e7eb; }
+.doc-table td { padding: 1rem; font-size: 0.9rem; color: #0f172a; border-bottom: 1px solid #f1f5f9; }
+.doc-table td svg { vertical-align: middle; margin-right: 8px; color: #64748b; }
 
 .documents-table-card {
   grid-column: 1 / -1;
   background: white;
   border-radius: 16px;
   border: 1px solid #e5e7eb;
-  padding: 1.5rem;
+  padding: 1rem;
   overflow: hidden;
 }
-
-.doc-table { width: 100%; border-collapse: collapse; }
-.doc-table th { text-align: left; padding: 1rem; font-size: 0.8rem; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e5e7eb; }
-.doc-table td { padding: 1rem; font-size: 0.9rem; color: #0f172a; border-bottom: 1px solid #f1f5f9; }
-.doc-table td svg { vertical-align: middle; margin-right: 8px; color: #64748b; }
 
 .empty-view {
   grid-column: 1 / -1;
@@ -1457,9 +1694,6 @@ body, html, #root {
 .empty-view svg { color: #cbd5e1; margin-bottom: 1rem; }
 .empty-view h2 { font-size: 1.5rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; }
 .empty-view p { color: #64748b; margin-bottom: 1.5rem; }
-
-/* Mobile Fixes */
-.mobile-menu-btn, .mobile-close-btn { display: none; }
 
 /* =========================================
    CHECKOUT PLAN SELECTOR
@@ -1557,16 +1791,18 @@ body, html, #root {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding-top: 2rem;
+  padding-top: 0.25rem; /* minimal gap above the card on mobile */
+  min-width: 0;
 }
 
 .translation-card {
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 24px;
-  padding: 2.5rem;
+  border-radius: 16px;
+  padding: 1.25rem;
   width: 100%;
   max-width: 700px;
+  min-width: 0;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
 }
 
@@ -1578,12 +1814,13 @@ body, html, #root {
 .beautiful-dropzone {
   border: 2px dashed #cbd5e1;
   border-radius: 16px;
-  padding: 3rem 2rem;
+  padding: 1.5rem 1rem;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;
   background: #f8fafc;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  min-width: 0;
 }
 
 .beautiful-dropzone:hover, 
@@ -1673,9 +1910,16 @@ body, html, #root {
   border: none;
   color: #94a3b8;
   cursor: pointer;
-  padding: 0.5rem;
+  padding: 0;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 50%;
   transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .remove-file-btn:hover {
@@ -1688,6 +1932,7 @@ body, html, #root {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 1rem;
   margin-bottom: 2rem;
   background: #f8fafc;
@@ -1697,7 +1942,8 @@ body, html, #root {
 }
 
 .lang-group {
-  flex: 1;
+  flex: 1 1 120px;
+  min-width: 0;
 }
 
 .lang-group label {
@@ -1747,8 +1993,8 @@ body, html, #root {
 
 .swap-btn {
   margin-top: 1.25rem;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: #ffffff;
   border: 1px solid #cbd5e1;
@@ -2633,6 +2879,7 @@ body, html, #root {
   align-items: center;
   gap: 6px;
   padding: 0.4rem 0.8rem;
+  min-height: 44px;
   background: #f1f5f9;
   color: #4D6FE6;
   border: 1px solid #e2e8f0;
@@ -2694,8 +2941,8 @@ body, html, #root {
   background: #f1f5f9;
   border: none;
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2766,386 +3013,106 @@ body, html, #root {
 }
 
 /* =========================================
-   NUCLEAR MOBILE RESET (Works on real devices)
+   TABLET (â‰¥768px) â€” tablet polish
    ========================================= */
-@media screen and (max-width: 900px) {
-  
-  /* 1. Force everything to stay within the screen width */
-  html, body {
-    width: 100%;
-    overflow-x: hidden !important;
-  }
+@media (min-width: 768px) {
+  .quick-actions-row { grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+  .search-bar { order: 0; flex: 0 1 220px; width: auto; }
+  .eduplex-header { margin-bottom: 1.25rem; }
+  .eduplex-main { padding: 1.25rem; }
+  .chart-card, .side-card, .list-card { padding: 1.5rem; }
+  .translation-workspace { padding-top: 0.5rem; }
+  .translation-card { border-radius: 20px; padding: 1.75rem; }
+  .beautiful-dropzone { padding: 2rem 1.25rem; margin-bottom: 1.5rem; }
+  .language-section { flex-wrap: nowrap; gap: 1rem; }
+  .hide-mobile { display: table-cell; }
+  .doc-table { min-width: 0; }
+  .documents-table-card { padding: 1.5rem; overflow-x: auto; }
+  .lang-btn { min-width: 0; min-height: 0; }
+  .translation-view-container { padding: 1rem; }
+  .translation-workspace { padding-top: 0.5rem; }
+}
 
-  /* 2. Fix the Layout Container */
+/* =========================================
+   DESKTOP (â‰¥1024px) â€” fixed sidebar + scrollable main
+   ========================================= */
+@media (min-width: 1024px) {
   .eduplex-layout {
-    display: flex;
-    flex-direction: column;
-    padding: 0 !important;
-    height: 100dvh; /* Dynamic viewport height for mobile */
+    flex-direction: row;
+    height: 100vh;
+    height: 100dvh;
+    padding: 1.5rem;
+    overflow: hidden;
   }
 
-  /* 3. Fix the Main Content (Remove desktop margins) */
-  .eduplex-main {
-    margin-left: 0 !important; /* CRITICAL: Removes the space left by the sidebar */
-    width: 100% !important;
-    padding: 1rem !important;
+  /* Sidebar fixed, in-flow */
+  .eduplex-sidebar {
+    position: static;
+    transform: none;
+    width: 240px;
+    flex-shrink: 0;
+    border-radius: 24px;
+    margin: 0 1.5rem 0 0;
+    height: 100%;
     overflow-y: auto;
   }
+  .sidebar-backdrop { display: none; }
+  .mobile-menu-btn { display: none; }
+  .mobile-close-btn { display: none; }
 
-  /* 4. Fix the Sidebar (Make it an off-canvas menu) */
-  .eduplex-sidebar {
-    position: fixed !important;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 260px;
-    z-index: 9999;
-    transform: translateX(-100%); /* Hide off-screen by default */
-    transition: transform 0.3s ease;
-    margin: 0 !important;
-    border-radius: 0 !important;
+  .eduplex-main {
+    height: 100%;
+    overflow: hidden;
+    padding: 0;
   }
 
-  .eduplex-sidebar.open {
-    transform: translateX(0); /* Slide in when open */
-  }
-
-  /* 5. Fix the Header */
+  /* Header â€” original single-row layout */
   .eduplex-header {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 1rem !important;
-    padding: 1rem !important;
+    flex-wrap: nowrap;
+    margin-bottom: 1.5rem;
+    padding: 0;
   }
-
+  .header-greeting { flex: 1 1 auto; }
   .header-actions {
-    width: 100% !important;
-    display: flex !important;
-    justify-content: space-between !important;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    order: 2;
   }
+  .search-bar { order: 0; flex: 0 1 150px; width: auto; }
 
-  .search-bar {
-    width: 100% !important;
-    max-width: none !important;
-  }
+  .translation-card { border-radius: 24px; padding: 2rem; }
+  .beautiful-dropzone { padding: 2.5rem 2rem; margin-bottom: 2rem; }
+  .translation-workspace { padding-top: 1rem; }
+  .documents-table-card { padding: 1.5rem; overflow-x: visible; overflow-y: visible; }
 
-  /* 6. Stack the Dashboard Grid */
+  /* Dashboard grid â€” two-column desktop grid */
   .dashboard-grid {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 1.5rem !important;
-    width: 100% !important;
-  }
-
-  .grid-main, .grid-side {
-    width: 100% !important;
-  }
-
-  /* 7. Stack the Quick Actions */
-  .quick-actions-row {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 1rem !important;
-  }
-
-  .action-card {
-    width: 100% !important;
-  }
-
-  /* 8. Make Tables Swipeable (Don't squish) */
-  .documents-table-card {
-    width: 100% !important;
-    padding: 0 !important;
-    overflow-x: auto !important; 
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .doc-table {
-    min-width: 600px !important; /* Forces table to be wide so you can swipe */
-  }
-
-  /* 9. Stack Billing Cards */
-  .billing-top-row, .upgrade-cards-grid {
-    display: flex !important;
-    flex-direction: column !important;
-    width: 100% !important;
-    gap: 1rem !important;
-  }
-
-  /* 10. Fix Auth Pages (Login/Signup) */
-  .auth-wrapper {
-    height: 100dvh !important;
-    overflow-y: auto !important;
-    padding: 1rem !important;
-  }
-
-  .auth-container {
-    flex-direction: column !important;
-    height: auto !important;
-    min-height: 100% !important;
-  }
-  
-  .auth-right {
-    display: none !important; /* Hide blue illustration */
-  }
-}
-
-/* =========================================
-   FIXING MOBILE UI BUGS (Landing & Sidebar)
-   ========================================= */
-@media screen and (max-width: 900px) {
-  
-  /* --- 1. FIX THE LANDING PAGE --- */
-  
-  /* Stack the hero section */
-  .landing-hero {
-    flex-direction: column !important;
-    padding: 3rem 1.5rem !important;
-    text-align: center;
-    gap: 2rem;
-  }
-
-  /* Force the text to take full width */
-  .hero-text {
-    max-width: 100% !important;
-    width: 100% !important;
-  }
-
-  /* Make the headline smaller so it doesn't break into 5 lines */
-  .hero-text h1 {
-    font-size: 2.2rem !important; 
-    line-height: 1.2 !important;
-    margin-bottom: 1rem !important;
-  }
-
-  /* Fix the navbar links (Features, Pricing, etc.) */
-  .landing-nav-links {
-    display: none !important; /* Hide on mobile to prevent wrapping */
-  }
-
-  /* Fix the hero buttons */
-  .hero-actions {
-    flex-direction: column !important;
-    width: 100% !important;
-    gap: 1rem !important;
-  }
-
-  .hero-actions button {
-    width: 100% !important;
-  }
-
-  /* Fix the mockup image */
-  .hero-visual {
-    width: 100% !important;
-    justify-content: center !important;
-  }
-  .visual-card {
-    max-width: 100% !important;
-  }
-
-
-  /* --- 2. FIX THE DASHBOARD SIDEBAR --- */
-  
-  /* Ensure the sidebar covers the full height and slides in cleanly */
-  .eduplex-sidebar {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    bottom: 0 !important;
-    width: 280px !important; /* Nice wide width for mobile */
-    height: 100dvh !important; /* Full device height */
-    z-index: 9999 !important;
-    margin: 0 !important;
-    border-radius: 0 !important;
-    transform: translateX(-100%) !important;
-    transition: transform 0.3s ease-in-out !important;
-  }
-
-  .eduplex-sidebar.open {
-    transform: translateX(0) !important;
-  }
-
-  /* Fix the sidebar close (X) button so it's visible */
-  .mobile-close-btn {
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.1) !important;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    color: #ffffff !important; /* Force white color */
-    position: absolute;
-    top: 1.5rem;
-    right: 1.5rem;
-  }
-
-  /* Add a dark backdrop behind the sidebar */
-  .sidebar-backdrop {
-    display: block !important;
-    position: fixed !important;
-    inset: 0 !important;
-    background: rgba(15, 23, 42, 0.7) !important; /* Dark transparent background */
-    backdrop-filter: blur(4px);
-    z-index: 9998 !important;
-  }
-}
-
-/* =========================================
-   MOBILE NAVIGATION & HEADER FIXES
-   ========================================= */
-@media screen and (max-width: 900px) {
-  
-  /* 1. Force the Hamburger Menu to show */
-  .mobile-menu-btn {
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    background: #f1f5f9;
-    border: none;
-    border-radius: 8px;
-    width: 40px;
-    height: 40px;
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-
-  /* 2. Fix the Header Layout so the button sits next to the text */
-  .eduplex-header {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 1rem !important;
-    padding: 1rem !important;
-  }
-
-  .header-greeting {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: flex-start !important;
-    width: 100% !important;
-    gap: 1rem !important;
-  }
-
-  .header-greeting h1 {
-    font-size: 1.2rem !important;
-    line-height: 1.3 !important;
-    margin-bottom: 0.25rem !important;
-  }
-
-  .header-greeting p {
-    font-size: 0.85rem !important;
-  }
-
-  /* 3. Ensure the Search Bar and Avatar look good below the title */
-  .header-actions {
-    display: flex !important;
-    width: 100% !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-  }
-
-  .search-bar {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
     flex: 1;
-    margin-right: 1rem;
-    max-width: none !important;
+    min-height: 0;
+    overflow: hidden;
   }
+  .grid-main, .grid-side {
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    gap: 1.5rem;
+    padding-right: 5px;
+  }
+  .grid-main::-webkit-scrollbar, .grid-side::-webkit-scrollbar { width: 4px; }
+  .grid-main::-webkit-scrollbar-thumb, .grid-side::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 
-  /* 4. Make the sidebar an off-canvas menu */
-  .eduplex-sidebar {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    bottom: 0 !important;
-    width: 280px !important;
-    height: 100dvh !important;
-    z-index: 9999 !important;
-    margin: 0 !important;
-    border-radius: 0 !important;
-    transform: translateX(-100%) !important;
-    transition: transform 0.3s ease-in-out !important;
-  }
-
-  .eduplex-sidebar.open {
-    transform: translateX(0) !important;
-  }
-
-  /* 5. Fix the sidebar close (X) button */
-  .mobile-close-btn {
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.1) !important;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    color: #ffffff !important;
-    position: absolute;
-    top: 1.5rem;
-    right: 1.5rem;
-  }
-
-  /* 6. Dark Backdrop */
-  .sidebar-backdrop {
-    display: block !important;
-    position: fixed !important;
-    inset: 0 !important;
-    background: rgba(15, 23, 42, 0.7) !important;
-    backdrop-filter: blur(4px);
-    z-index: 9998 !important;
-  }
+  .eduplex-header h1 { font-size: 1.6rem; }
+  .header-greeting h1 { font-size: 1.6rem; }
+  .header-greeting p { font-size: 0.9rem; }
 }
 
-/* Hide hamburger on desktop */
-@media (min-width: 901px) {
-  .mobile-menu-btn {
-    display: none !important;
-  }
-}
-
-/* Language Switcher Pill */
-.lang-switcher-pill {
-  display: inline-flex;
-  align-items: center;
-  background: #f1f5f9;
-  padding: 4px;
-  border-radius: 20px;
-  border: 1px solid #e2e8f0;
-}
-
-.lang-btn {
-  background: transparent;
-  border: none;
-  padding: 4px 12px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #94a3b8;
-  cursor: pointer;
-  border-radius: 16px;
-  transition: all 0.2s;
-}
-
-.lang-btn.active {
-  background: #ffffff;
-  color: #0f172a;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.lang-divider {
-  color: #cbd5e1;
-  font-weight: 700;
-  font-size: 0.8rem;
-  margin: 0 2px;
-}
-
-@media (max-width: 768px) {
-  .landing-nav-links {
-    display: none !important; /* Hide text links on mobile to save space */
-  }
-  .landing-auth-buttons {
-    gap: 0.5rem !important;
-  }
-}
+/* =========================================
+   Reduced motion
+   ========================================= */
 
 /* =========================================
    FIX: PROBLEM / SOLUTION MOBILE STACKING
@@ -3211,84 +3178,6 @@ body, html, #root {
   .comparison-table th {
     font-size: 0.9rem !important;
     font-weight: 700 !important;
-  }
-}
-
-/* =========================================
-   REAL MOBILE DEVICE FIXES
-   ========================================= */
-@media screen and (max-width: 850px) {
-  
-  /* 1. Stop horizontal scrolling */
-  html, body {
-    overflow-x: hidden !important;
-    width: 100% !important;
-  }
-
-  /* 2. Fix the Navbar (Prevent buttons from wrapping) */
-  .landing-navbar {
-    padding: 0.75rem 1rem !important;
-    gap: 0.5rem !important;
-  }
-
-  .landing-auth-buttons {
-    display: flex !important;
-    align-items: center !important;
-    gap: 0.5rem !important;
-  }
-
-  /* Force the Login and Signup buttons to stay on one line */
-  .landing-auth-buttons .btn-outline,
-  .landing-auth-buttons .btn-primary {
-    white-space: nowrap !important;
-    padding: 0.5rem 0.75rem !important;
-    font-size: 0.8rem !important;
-  }
-
-  /* Make the language switcher smaller */
-  .lang-switcher-pill {
-    padding: 2px !important;
-  }
-  .lang-btn {
-    padding: 4px 8px !important;
-    font-size: 0.75rem !important;
-  }
-
-  /* 3. Fix the Hero Section */
-  .landing-hero {
-    padding: 2rem 1rem !important;
-    text-align: center !important;
-  }
-  
-  .hero-text h1 {
-    font-size: 2rem !important; /* Smaller headline for phones */
-    line-height: 1.2 !important;
-  }
-
-  .hero-actions {
-    flex-direction: column !important;
-    width: 100% !important;
-    gap: 0.75rem !important;
-  }
-
-  .hero-actions button {
-    width: 100% !important;
-    justify-content: center !important;
-  }
-
-  /* 4. Fix the grids (Problem/Solution, Features, Footer) */
-  .problem-grid,
-  .features-grid,
-  .steps-container,
-  .footer-grid {
-    display: flex !important;
-    flex-direction: column !important;
-    width: 100% !important;
-    gap: 1.5rem !important;
-  }
-
-  .step-connector {
-    display: none !important; /* Hide the lines between steps */
   }
 }
 
@@ -3374,72 +3263,72 @@ body, html, #root {
 }
 
 /* =========================================
-   MOBILE FIX: DASHBOARD HEADER & LAYOUT
+   FIX: PROBLEM / SOLUTION MOBILE STACKING
    ========================================= */
 @media screen and (max-width: 900px) {
-  
-  /* 1. Stack the Header vertically */
-  .eduplex-header {
+  .problem-grid,
+  .features-grid,
+  .steps-container,
+  .footer-grid {
     display: flex !important;
     flex-direction: column !important;
-    align-items: flex-start !important;
-    padding: 1rem !important;
-    gap: 1rem !important;
-  }
-
-  /* 2. Keep the Hamburger and Title on the same row */
-  .header-greeting {
-    display: flex !important;
-    align-items: flex-start !important;
     width: 100% !important;
-    gap: 0.75rem !important;
+    gap: 1.5rem !important;
   }
 
-  .header-greeting h1 {
-    font-size: 1.2rem !important;
-    line-height: 1.3 !important;
+  .step-connector {
+    display: none !important;
   }
+}
 
-  .header-greeting p {
-    font-size: 0.85rem !important;
-  }
+/* Language Switcher Pill */
+.lang-switcher-pill {
+  display: inline-flex;
+  align-items: center;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  min-width: 0;
+}
 
-  /* 3. Re-arrange the actions row */
-  .header-actions {
-    display: flex !important;
-    width: 100% !important;
-    flex-wrap: wrap !important; /* Allow items to wrap to next line */
-    justify-content: space-between !important;
-    align-items: center !important;
-    gap: 0.5rem !important;
-  }
+.lang-btn {
+  background: transparent;
+  border: none;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #94a3b8;
+  cursor: pointer;
+  border-radius: 16px;
+  transition: all 0.2s;
+  min-width: 44px;   /* touch target */
+  min-height: 44px;  /* touch target */
+}
 
-  /* 4. Force the search bar to drop to a new line and take full width */
-  .search-bar {
-    order: 3 !important; /* Moves it to the end */
-    width: 100% !important;
-    margin-top: 0.5rem !important;
-    max-width: none !important;
-  }
+.lang-btn.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
 
-  .search-bar input {
-    width: 100% !important;
-  }
+.lang-divider {
+  color: #cbd5e1;
+  font-weight: 700;
+  font-size: 0.8rem;
+  margin: 0 2px;
+}
 
-  /* 5. Slightly smaller avatar for mobile */
-  .header-avatar {
-    width: 32px !important;
-    height: 32px !important;
-    font-size: 0.9rem !important;
-  }
-
-  /* 6. Fix the dashboard cards padding */
-  .dashboard-grid {
-    gap: 1rem !important;
-    padding: 0 1rem 2rem 1rem !important;
-  }
-
-  .action-card {
-    padding: 1rem !important;
+/* =========================================
+   Reduced motion
+   ========================================= */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

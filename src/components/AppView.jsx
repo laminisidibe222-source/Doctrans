@@ -132,7 +132,7 @@ export default function AppView({
       {isSidebarOpen && <div className="sidebar-backdrop" onClick={() => setIsSidebarOpen(false)}></div>}
 
       {/* SIDEBAR */}
-      <aside className={`eduplex-sidebar ${isSidebarOpen ? "open" : "closed"}`}>
+      <aside className={`eduplex-sidebar ${isSidebarOpen ? "open" : "closed"}`} id="app-sidebar" aria-label={locale === "fr" ? "Menu principal" : "Main menu"}>
         <div className="sidebar-logo">
           <div className="logo-icon-box"><span className="logo-symbol">D</span></div>
           <span className="logo-text">DocTrans</span>
@@ -174,10 +174,16 @@ export default function AppView({
       <main className="eduplex-main">
         <header className="eduplex-header">
           <div className="header-greeting">
-            <button className="mobile-menu-btn" onClick={() => setIsSidebarOpen(true)}>
+            <button
+              className="mobile-menu-btn"
+              onClick={() => setIsSidebarOpen(true)}
+              aria-label={locale === "fr" ? "Ouvrir le menu" : "Open menu"}
+              aria-expanded={isSidebarOpen}
+              aria-controls="app-sidebar"
+            >
               <Menu size={24} color="#111827" />
             </button>
-            <div>
+            <div className="header-title-block">
               <h1>
                 {activeTab === "dashboard" && <>{t.dash.welcome}, <span>{displayName}</span> 👋</>}
                 {activeTab === "new" && t.dash.newTransTitle}
@@ -196,8 +202,8 @@ export default function AppView({
           </div>
           <div className="header-actions">
             <LanguageSwitcher locale={locale} setLocale={setLocale} />
-            <div className="search-bar"><Search size={16} /><input type="text" placeholder="Search..." /></div>
-            <button className="icon-btn"><Bell size={18} /></button>
+            <div className="search-bar"><Search size={16} /><input type="text" placeholder={locale === "fr" ? "Rechercher…" : "Search..."} aria-label={locale === "fr" ? "Rechercher" : "Search"} /></div>
+            <button className="icon-btn" aria-label={locale === "fr" ? "Notifications" : "Notifications"}><Bell size={18} /></button>
             <div className="header-avatar">{email ? email[0].toUpperCase() : "U"}</div>
           </div>
         </header>
