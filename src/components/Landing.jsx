@@ -8,6 +8,16 @@ import LanguageSwitcher from "./LanguageSwitcher";
 import { translations } from "../i18n";
 import "../doctrans.css";
 
+/* Rows of the "Why DocTrans is different" comparison.
+   Shared by the desktop table and the mobile card list so the two never
+   drift apart. Add an i18n key here and it appears in both. */
+const COMPARISON_ROWS = [
+  { key: "compRow1" },
+  { key: "compRow2" },
+  { key: "compRow3" },
+  { key: "compRow4" }
+];
+
 export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup, locale, setLocale }) {
   const t = translations[locale] || translations["en"];
   const [menuOpen, setMenuOpen] = useState(false);
@@ -188,21 +198,46 @@ export default function Landing({ goApp, goPricingCheckout, goLogin, goSignup, l
           <h2>{t.landing.compTitle}</h2>
           <p>{t.landing.compSub}</p>
         </div>
+
+        {/* Desktop: the classic 3-column table */}
         <div className="comparison-scroll-shell">
-        <div className="comparison-table-wrapper">
-          <table className="comparison-table">
-            <thead>
-              <tr><th>{t.landing.compFeature}</th><th>{t.landing.compDocTrans}</th><th>{t.landing.compTraditional}</th></tr>
-            </thead>
-            <tbody>
-              <tr><td>{t.landing.compRow1}</td><td><CheckCircle2 className="text-green" size={20} /></td><td><span className="text-red">✕</span></td></tr>
-              <tr><td>{t.landing.compRow2}</td><td><CheckCircle2 className="text-green" size={20} /></td><td><span className="text-red">✕</span></td></tr>
-              <tr><td>{t.landing.compRow3}</td><td><CheckCircle2 className="text-green" size={20} /></td><td><span className="text-red">✕</span></td></tr>
-              <tr><td>{t.landing.compRow4}</td><td><CheckCircle2 className="text-green" size={20} /></td><td><span className="text-red">✕</span></td></tr>
-            </tbody>
-          </table>
+          <div className="comparison-table-wrapper">
+            <table className="comparison-table">
+              <thead>
+                <tr><th>{t.landing.compFeature}</th><th>{t.landing.compDocTrans}</th><th>{t.landing.compTraditional}</th></tr>
+              </thead>
+              <tbody>
+                {COMPARISON_ROWS.map((row) => (
+                  <tr key={row.key}>
+                    <td>{t.landing[row.key]}</td>
+                    <td><CheckCircle2 className="text-green" size={20} /></td>
+                    <td><span className="text-red">✕</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-        </div>
+
+        {/* Mobile: the same data as stacked cards, so nothing needs swiping */}
+        <ul className="comparison-cards">
+          {COMPARISON_ROWS.map((row) => (
+            <li className="comparison-card" key={row.key}>
+              <p className="comparison-card-title">{t.landing[row.key]}</p>
+              <div className="comparison-card-opts">
+                <div className="comparison-opt is-yes">
+                  <CheckCircle2 size={16} />
+                  <span className="comparison-opt-label">{t.landing.compDocTrans}</span>
+                  <span className="comparison-opt-yes">✓</span>
+                </div>
+                <div className="comparison-opt is-no">
+                  <span className="comparison-opt-x">✕</span>
+                  <span className="comparison-opt-label">{t.landing.compTraditional}</span>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
       </section>
 
       {/* PRICING (UPDATED WITH NEW LIMITS) */}
