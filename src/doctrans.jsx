@@ -49,6 +49,9 @@ export default function DocTrans() {
   const handleLogout = () => { 
     localStorage.removeItem("doctrans_token");
     localStorage.removeItem("doctrans_email");
+    // forget the last tab so the next login starts on the dashboard
+    localStorage.removeItem("doctrans_tab");
+    if (window.history?.replaceState) window.history.replaceState(null, "", "#");
     setEmailState("");
     setScreen("landing"); 
     setPlan(null); 

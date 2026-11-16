@@ -14,8 +14,33 @@ export default function AppView({
   onOpenCheckout, plan, locale, setLocale, onLogout, email, setEmail,
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("dashboard");
-  
+
+  /* The active tab is remembered across refreshes.
+     Previously it was plain component state, so reloading the page (or
+     returning from a payment redirect) always dropped the user back on
+     the dashboard even though they were still logged in. */
+  const [activeTab, setActiveTabState] = useState(() => {
+    const TAB_KEY = "doctrans_tab";
+    const VALID = ["dashboard", "new", "documents", "billing", "settings"];
+    let saved = null;
+    try { saved = localStorage.getItem(TAB_KEY); } catch { /* storage blocked */ }
+
+    // A hash in the URL is an explicit request (deep link or reload) and must
+    // win over the remembered tab, otherwise #billing can open the previous
+    // session's panel.
+    const hash = window.location.hash.slice(1);
+    if (hash && VALID.includes(hash)) return hash;
+    return VALID.includes(saved) ? saved : "dashboard";
+  });
+
+  const setActiveTab = (tab) => {
+    setActiveTabState(tab);
+    try { localStorage.setItem("doctrans_tab", tab); } catch { /* storage blocked */ }
+    if (window.history?.replaceState) {
+      window.history.replaceState(null, "", tab === "dashboard" ? "#" : `#${tab}`);
+    }
+  };
+
   const t = translations[locale] || translations["en"];
 
   const [sourceLang, setSourceLang] = useState("auto");
@@ -60,8 +85,19 @@ export default function AppView({
     }
   }, [activeTab, email]);
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
+  /* Keep the tab in sync with the URL hash so the browser back/forward
+     buttons move between panels instead of leaving the app. */
+  useEffect(() => {
+    const onHashChange = () => {
+      const hash = window.location.hash.slice(1);
+      const VALID = ["dashboard", "new", "documents", "billing", "settings"];
+      setActiveTabState(VALID.includes(hash) ? hash : "dashboard");
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
+  const handleFileChange = (e) => {    const file = e.target.files[0];
     if (file) { setSelectedFile(file); setTranslatedDoc(null); }
   };
 
